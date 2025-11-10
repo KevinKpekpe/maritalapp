@@ -29,6 +29,10 @@ Route::middleware('auth.session')->group(function () {
     Route::get('beverages/search', [BeverageController::class, 'search'])->name('beverages.search');
     Route::resource('beverages', BeverageController::class)->except(['show']);
 
+    Route::get('invitations/show', function () {
+        return view('invitations.invitation');
+    })->name('invitations.show');
+
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 });
 
