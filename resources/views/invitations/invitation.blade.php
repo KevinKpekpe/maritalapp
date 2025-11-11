@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mariage Raphael et Daniella</title>
+    <title>{{ $event['page_title'] ?? 'Invitation de mariage' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -60,6 +60,10 @@
                 radial-gradient(circle at bottom right, rgba(104, 82, 189, 0.08), transparent 46%),
                 #f9f5f1;
             color: #2C2521;
+        }
+
+        .bg-linear-to-r {
+            background-image: linear-gradient(to right, var(--tw-gradient-stops));
         }
 
         body.no-scroll {
@@ -255,6 +259,120 @@
             font-size: 0.95rem;
             line-height: 1.65;
             color: rgba(44, 37, 33, 0.72);
+        }
+
+        .map-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            padding: 2.4rem 2.1rem;
+            border-radius: 32px;
+            background: linear-gradient(145deg, rgba(255, 253, 250, 0.95), rgba(255, 236, 220, 0.86));
+            border: 1px solid rgba(217, 123, 47, 0.15);
+            box-shadow: 0 18px 55px rgba(43, 34, 29, 0.12);
+            overflow: hidden;
+        }
+
+        .map-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            pointer-events: none;
+        }
+
+        .map-card__badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            align-self: flex-start;
+            padding: 0.45rem 1.3rem;
+            border-radius: 999px;
+            background: rgba(217, 123, 47, 0.12);
+            color: #D97B2F;
+            letter-spacing: 0.32em;
+            text-transform: uppercase;
+            font-size: 0.68rem;
+            font-weight: 600;
+        }
+
+        .map-card__title {
+            font-family: "Playfair Display", serif;
+            font-size: 1.75rem;
+            color: #2C2521;
+            letter-spacing: 0.02em;
+        }
+
+        .map-card__address {
+            font-size: 0.98rem;
+            line-height: 1.7;
+            color: rgba(44, 37, 33, 0.7);
+            white-space: pre-line;
+        }
+
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: 280px;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7), 0 16px 38px rgba(32, 24, 20, 0.14);
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.85), rgba(255, 240, 224, 0.65));
+        }
+
+        .map-container iframe {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .map-placeholder {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            color: rgba(44, 37, 33, 0.55);
+            font-style: italic;
+            font-size: 0.95rem;
+        }
+
+        .map-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            align-self: flex-start;
+            padding: 0.4rem 1.15rem;
+            border-radius: 999px;
+            background: rgba(33, 29, 43, 0.08);
+            color: rgba(44, 37, 33, 0.82);
+            font-size: 0.78rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            transition: background 0.25s ease, transform 0.25s ease;
+        }
+
+        .map-actions:hover {
+            background: rgba(44, 37, 33, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .map-actions svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .map-card {
+                padding: 1.9rem 1.6rem;
+            }
+
+            .map-container {
+                height: 240px;
+            }
         }
 
         .schedule-highlight {
@@ -706,6 +824,17 @@
     </style>
 </head>
 
+@php
+    $selectedBeverageIds = $guest->preferences->pluck('beverage_id')->filter()->values();
+    $selectedBeverageNames = $selectedBeverageIds
+        ->map(fn ($id) => $beverageMap[$id] ?? null)
+        ->filter()
+        ->values();
+    $coupleInitials = collect(preg_split('/\s+/', $event['couple_names'] ?? '', -1, PREG_SPLIT_NO_EMPTY))
+        ->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))
+        ->take(2)
+        ->implode(' & ');
+@endphp
 <body class="overflow-x-hidden no-scroll">
     <div class="snow-layer" aria-hidden="true"></div>
     <div id="reveal-overlay" class="reveal-overlay" tabindex="0">
@@ -723,9 +852,9 @@
             <div class="envelope__seal">&#10084;</div>
             <div class="envelope__letter">
                 <span>Invitation</span>
-                <p class="envelope__initials">R &amp; D</p>
-                <em>Raphael &amp; Daniella</em>
-                <small>29 novembre 2025</small>
+                <p class="envelope__initials">{{ $coupleInitials }}</p>
+                <em>{{ $event['couple_names'] ?? '' }}</em>
+                <small>{{ $event['date_long'] ?? '' }}</small>
             </div>
         </div>
         <p class="reveal-instruction">Cliquez pour ouvrir</p>
@@ -745,19 +874,20 @@
                     the Date</span>
                 <h1
                     class="text-4xl sm:text-5xl lg:text-6xl font-display tracking-wide leading-tight text-white drop-shadow-soft">
-                    Raphael et Daniella</h1>
+                    {{ $event['couple_names'] ?? 'Nos Mariés' }}</h1>
+                <p class="text-white/80 text-sm sm:text-base tracking-[0.26em] uppercase">Samedi 29 novembre 2025</p>
 
                 <div class="relative flex items-center justify-center">
-                    <div class="absolute -inset-4 rounded-full bg-gradient-to-r from-white/10 to-white/0 blur-2xl">
+                    <div class="absolute -inset-4 rounded-full bg-linear-to-r from-white/10 to-white/0 blur-2xl">
                     </div>
                     <img src="{{ asset('invitations/savethedate.png') }}" alt="Save the date"
-                        class="relative w-48 sm:w-64 lg:w-[22rem] opacity-95 drop-shadow-2xl">
+                        class="relative w-48 sm:w-64 lg:w-88 opacity-95 drop-shadow-2xl">
                 </div>
             </div>
         </section>
 
         <section class="relative px-6 sm:px-10 lg:px-16 py-20 sm:py-24 bg-no-repeat bg-cover"
-            style="background-image: linear-gradient(rgba(255,247,244,0.95), rgba(255,233,224,0.88)), url('https://images.unsplash.com/photo-1486427944299-d1955d23e34d?auto=format&fit=crop&w=1400&q=80');">
+            style="background-image: linear-gradient(rgba(255,247,244,0.95), rgba(255,233,224,0.88)), url('{{ asset('invitations/invitationuse.jpeg') }}');">
             <div
                 class="relative ornate-card max-w-5xl mx-auto px-7 sm:px-12 lg:px-16 py-14 sm:py-16 shadow-2xl border border-white/20">
                 <img src="{{ asset('invitations/bouquet.png') }}" alt="Décoration bouquet"
@@ -771,20 +901,14 @@
                                 class="inline-flex items-center justify-center gap-2 px-5 py-2 rounded-full bg-accent/10 text-accent font-semibold tracking-[0.28em] uppercase text-xs sm:text-sm shadow-soft">La
                                 célébration</span>
                             <div class="space-y-2">
-                                <h2 class="font-display text-4xl sm:text-5xl text-accent leading-tight">Raphael &amp;
-                                    Daniella</h2>
+                                <h2 class="font-display text-4xl sm:text-5xl text-accent leading-tight">{{ $event['couple_names'] ?? '' }}</h2>
                                 <p
                                     class="font-serif text-sm sm:text-base tracking-[0.26em] uppercase text-ink font-medium">
-                                    Samedi 29 novembre 2025</p>
-                            </div>
-                            <div class="divider text-ink-soft">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97B2F"
-                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M12 7l-5 5 5 5"></path>
-                                    <path d="M17 7l-5 5 5 5"></path>
-                                </svg>
-                                <span class="uppercase tracking-[0.32em] text-xs sm:text-sm text-ink font-medium">Unir
-                                    nos destins</span>
+                                    {{ $event['date_long'] ?? '' }}</p>
+                                <p class="font-display text-3xl text-accent/90">Invitation pour {{ $guest->display_name }}</p>
+                                @if ($guest->table)
+                                    <p class="font-display text-2xl text-accent/80">Table : {{ $guest->table->name }}</p>
+                                @endif
                             </div>
                         </div>
                         <p
@@ -793,7 +917,7 @@
                             partager une soirée scintillante ✨. Votre présence chérira notre histoire et illuminera
                             cette journée.
                         </p>
-
+                        <p class="font-display text-2xl text-accent/80">Dress code : {{ $event['dress_code'] ?? 'Chic et Élégant' }}</p>
                         <div class="schedule-grid">
                             <article class="schedule-card">
                                 <div class="schedule-icon">
@@ -804,12 +928,9 @@
                                     </svg>
                                 </div>
                                 <div class="schedule-content">
-                                    <span class="schedule-time">10h00</span>
-                                    <h3>Bénédiction nuptiale</h3>
-                                    <p>
-                                        Église La Borne Cité verte, 13e rue cité verte.<br>
-                                        <span class="schedule-highlight">Réf. École Pierre Bouvet</span>
-                                    </p>
+                                    <span class="schedule-time">{{ $event['ceremony_time'] ?? '10h00' }}</span>
+                                    <h3>{{ $event['ceremony_title'] ?? 'Cérémonie' }}</h3>
+                                    <p>{!! nl2br(e($event['ceremony_location'] ?? '')) !!}</p>
                                 </div>
                             </article>
                             <article class="schedule-card">
@@ -823,12 +944,9 @@
                                     </svg>
                                 </div>
                                 <div class="schedule-content">
-                                    <span class="schedule-time">19h30</span>
-                                    <h3>Soirée dansante</h3>
-                                    <p>
-                                        Salle de fête Sanam Center, 13B avenue Basoko – Gombe.<br>
-                                        <span class="schedule-highlight">Réf. Orca</span>
-                                    </p>
+                                    <span class="schedule-time">{{ $event['reception_time'] ?? '19h30' }}</span>
+                                    <h3>{{ $event['reception_title'] ?? 'Réception' }}</h3>
+                                    <p>{!! nl2br(e($event['reception_location'] ?? '')) !!}</p>
                                 </div>
                             </article>
                         </div>
@@ -840,14 +958,24 @@
                     <div class="flex flex-col items-center gap-8 w-full max-w-xs mx-auto animate-fade-up">
                         <div class="qr-card">
                             <img class="qr-image"
-                                src="https://api.qrserver.com/v1/create-qr-code/?size=380x380&data=https%3A%2F%2Fplanningevents-rdc.com%2Finvitation%2Fralph-daniella"
+                                src="{{ $qrCodeDataUri ?? $qrCodeUrl }}"
                                 alt="QR code vers l'invitation">
                             <p class="qr-caption">Scannez pour confirmer votre présence et découvrir plus de détails.
                             </p>
                         </div>
+                        <div class="text-center flex flex-col items-center gap-2">
+                            @if (session('download_error'))
+                                <div class="alert alert-danger bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-full">
+                                    {{ session('download_error') }}
+                                </div>
+                            @endif
+                            @if ($downloadNotice)
+                                <div class="text-xs text-white/70 max-w-sm">{{ $downloadNotice }}</div>
+                            @endif
+                            <div id="download-message" class="text-sm text-white/90" aria-live="polite"></div>
                         <button id="download-invitation"
-                            class="download-button relative inline-flex items-center justify-center gap-3 rounded-full bg-gradient-to-r from-accent via-orange-400/80 to-amber-300 px-8 py-3 text-sm sm:text-base text-white font-semibold tracking-wide shadow-lg transition-transform hover:-translate-y-1 hover:shadow-glow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-accent/70"
-                            type="button">
+                            class="download-button relative inline-flex items-center justify-center gap-3 rounded-full bg-linear-to-r from-accent via-orange-400/80 to-amber-300 px-8 py-3 text-sm sm:text-base text-white font-semibold tracking-wide shadow-lg transition-transform hover:-translate-y-1 hover:shadow-glow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-accent/70"
+                                type="button" aria-live="polite">
                             <span class="download-button__overlay"></span>
                             <span class="download-button__content">
                                 <span class="download-label">Télécharger l'invitation</span>
@@ -867,9 +995,86 @@
                                 </span>
                             </span>
                         </button>
-                        <span class="text-xs text-ink-soft text-center">Recevez le programme complet et vos accès
-                            personnalisés.</span>
+                        </div>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="relative px-6 sm:px-10 lg:px-16 py-20 sm:py-24 bg-linear-to-br from-pearl via-white to-[#fdf1e8] rounded-[36px]">
+            <div class="absolute inset-0 pointer-events-none opacity-60"
+                style="background: radial-gradient(circle at 12% 18%, rgba(217,123,47,0.18), transparent 60%), radial-gradient(circle at 88% 88%, rgba(73,50,139,0.12), transparent 58%);">
+            </div>
+            <div class="relative max-w-6xl mx-auto space-y-12">
+                <div class="text-center space-y-4 animate-fade-up">
+                    <span
+                        class="inline-flex items-center justify-center gap-2 px-5 py-2 rounded-full bg-ink/5 text-ink font-semibold tracking-[0.28em] uppercase text-xs sm:text-sm shadow-soft">Accès
+                        &amp; Localisation</span>
+                    <h2 class="font-display text-3xl sm:text-4xl text-accent">Retrouvez facilement nos lieux de fête</h2>
+                    <p class="max-w-3xl mx-auto text-sm sm:text-base text-ink-soft leading-relaxed">
+                        Deux moments inoubliables, deux adresses à ne pas manquer. Naviguez sur les cartes pour préparer
+                        votre itinéraire vers l’église puis la salle de réception.
+                    </p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                    <article class="map-card animate-fade-up">
+                        <span class="map-card__badge">Cérémonie</span>
+                        <h3 class="map-card__title">{{ $event['ceremony_title'] ?? 'Cérémonie' }}</h3>
+                        <p class="map-card__address">{!! nl2br(e($event['ceremony_location'] ?? '')) !!}</p>
+                        <div class="map-container" role="presentation">
+                            @if (!empty($event['ceremony_map_query']))
+                                <iframe
+                                    src="https://www.google.com/maps?q={{ urlencode($event['ceremony_map_query']) }}&output=embed"
+                                    loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade"
+                                    title="Carte de la cérémonie"></iframe>
+                            @else
+                                <span class="map-placeholder">Carte indisponible pour le moment</span>
+                            @endif
+                        </div>
+                        @if (!empty($event['ceremony_map_query']))
+                            <a class="map-actions"
+                                href="https://www.google.com/maps/dir/?api=1&destination={{ urlencode($event['ceremony_map_query']) }}"
+                                target="_blank" rel="noopener noreferrer">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"></path>
+                                    <path
+                                        d="M5.5 9.5c0 5.5 3.5 9.5 6.5 11.5 3-2 6.5-6 6.5-11.5a6.5 6.5 0 0 0-13 0Z">
+                                    </path>
+                                </svg>
+                                Itinéraire
+                            </a>
+                        @endif
+                    </article>
+                    <article class="map-card animate-fade-up" style="animation-delay: 0.15s;">
+                        <span class="map-card__badge">Réception</span>
+                        <h3 class="map-card__title">{{ $event['reception_title'] ?? 'Réception' }}</h3>
+                        <p class="map-card__address">{!! nl2br(e($event['reception_location'] ?? '')) !!}</p>
+                        <div class="map-container" role="presentation">
+                            @if (!empty($event['reception_map_query']))
+                                <iframe
+                                    src="https://www.google.com/maps?q={{ urlencode($event['reception_map_query']) }}&output=embed"
+                                    loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade"
+                                    title="Carte de la réception"></iframe>
+                            @else
+                                <span class="map-placeholder">Carte indisponible pour le moment</span>
+                            @endif
+                        </div>
+                        @if (!empty($event['reception_map_query']))
+                            <a class="map-actions"
+                                href="https://www.google.com/maps/dir/?api=1&destination={{ urlencode($event['reception_map_query']) }}"
+                                target="_blank" rel="noopener noreferrer">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"></path>
+                                    <path
+                                        d="M5.5 9.5c0 5.5 3.5 9.5 6.5 11.5 3-2 6.5-6 6.5-11.5a6.5 6.5 0 0 0-13 0Z">
+                                    </path>
+                                </svg>
+                                Itinéraire
+                            </a>
+                        @endif
+                    </article>
                 </div>
             </div>
         </section>
@@ -878,15 +1083,21 @@
             class="relative px-6 sm:px-10 lg:px-16 py-20 sm:py-24 text-center text-ink-soft bg-cover bg-center overflow-hidden rounded-[36px]"
             style="background-image: linear-gradient(rgba(255,255,255,0.92), rgba(255,232,215,0.9)), url('https://images.unsplash.com/photo-1520854221057-9c5f6d0f6f07?auto=format&fit=crop&w=1400&q=80');">
             <div
-                class="absolute inset-x-0 -bottom-32 h-64 bg-gradient-to-t from-pearl to-transparent pointer-events-none">
+                class="absolute inset-x-0 -bottom-32 h-64 bg-linear-to-t from-pearl to-transparent pointer-events-none">
             </div>
             <div class="relative max-w-5xl mx-auto space-y-5 sm:space-y-6 animate-fade-up">
                 <h2 class="font-display text-3xl sm:text-4xl text-accent">Vos préférences</h2>
                 <p class="text-base sm:text-lg leading-relaxed max-w-2xl mx-auto text-ink-soft">
-                    Aidez-nous à préparer une carte des boissons qui vous ressemble 🥂<br class="hidden sm:inline">
-                    Sélectionnez jusqu’à deux options pour guider nos choix.
+                    Sélectionnez jusqu’à deux boissons qui vous ressemblent 🥂<br class="hidden sm:inline">
+                    Elles seront enregistrées lors de la confirmation de votre présence.
                 </p>
                 <p class="italic text-xs sm:text-sm text-ink/60">(Deux suggestions au maximum)</p>
+                <p class="text-sm text-ink-soft">
+                    Vos choix actuels :
+                    <strong id="selected-beverages-label">
+                        {{ $selectedBeverageNames->isNotEmpty() ? $selectedBeverageNames->join(', ') : 'Aucune sélection' }}
+                    </strong>
+                </p>
             </div>
 
             <div class="relative mt-12 grid gap-12 sm:gap-14 max-w-5xl mx-auto">
@@ -894,15 +1105,17 @@
                     <div class="flex flex-col items-center gap-3">
                         <h3 class="section-title text-sm tracking-[0.28em] uppercase text-ink font-semibold">Boissons
                             alcoolisées</h3>
-                        <span class="h-0.5 w-14 rounded-full bg-gradient-to-r from-accent to-amber-300"></span>
+                        <span class="h-0.5 w-14 rounded-full bg-linear-to-r from-accent to-amber-300"></span>
                     </div>
                     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 justify-items-center">
-                        <button class="drink-option" type="button" data-drink="castel">Castel</button>
-                        <button class="drink-option" type="button" data-drink="beaufort">Beaufort</button>
-                        <button class="drink-option" type="button" data-drink="tembo">Tembo</button>
-                        <button class="drink-option" type="button" data-drink="heineken">Heinekein</button>
-                        <button class="drink-option" type="button" data-drink="nkoyi">Nkoyi</button>
-                        <button class="drink-option" type="button" data-drink="likofi">Likofi</button>
+                        @foreach (($beverages['alcool'] ?? collect()) as $beverage)
+                            @php $selected = $selectedBeverageIds->contains($beverage->id); @endphp
+                            <button class="drink-option {{ $selected ? 'is-selected' : '' }}" type="button"
+                                data-beverage-id="{{ $beverage->id }}" aria-pressed="{{ $selected ? 'true' : 'false' }}"
+                                {{ $guest->rsvp_status === 'confirmed' ? 'disabled' : '' }}>
+                                {{ $beverage->name }}
+                            </button>
+                        @endforeach
                     </div>
                 </div>
 
@@ -910,62 +1123,104 @@
                     <div class="flex flex-col items-center gap-3">
                         <h3 class="section-title text-sm tracking-[0.28em] uppercase text-ink font-semibold">Boissons
                             non alcoolisées</h3>
-                        <span class="h-0.5 w-14 rounded-full bg-gradient-to-r from-accent to-amber-300"></span>
+                        <span class="h-0.5 w-14 rounded-full bg-linear-to-r from-accent to-amber-300"></span>
                     </div>
                     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 justify-items-center">
-                        <button class="drink-option" type="button" data-drink="coca">Coca</button>
-                        <button class="drink-option" type="button" data-drink="fanta">Fanta</button>
-                        <button class="drink-option" type="button" data-drink="vitalo">Vitalo</button>
-                        <button class="drink-option" type="button" data-drink="malta">Malta</button>
-                        <button class="drink-option" type="button" data-drink="sprite">Sprite</button>
-                        <button class="drink-option" type="button" data-drink="energy-malt">Energy Malt</button>
+                        @foreach (($beverages['sucre'] ?? collect()) as $beverage)
+                            @php $selected = $selectedBeverageIds->contains($beverage->id); @endphp
+                            <button class="drink-option {{ $selected ? 'is-selected' : '' }}" type="button"
+                                data-beverage-id="{{ $beverage->id }}" aria-pressed="{{ $selected ? 'true' : 'false' }}"
+                                {{ $guest->rsvp_status === 'confirmed' ? 'disabled' : '' }}>
+                                {{ $beverage->name }}
+                            </button>
+                        @endforeach
                     </div>
                 </div>
             </div>
         </section>
 
-        <section
-            class="relative px-6 sm:px-10 lg:px-16 py-24 flex items-center justify-center bg-cover bg-center rounded-[36px]"
-            style="background-image: linear-gradient(rgba(30,26,26,0.58), rgba(30,26,26,0.55)), url('{{ asset('invitations/bg.jpeg') }}');">
-            <div class="absolute inset-0 grain-overlay opacity-60"></div>
-            <div
-                class="relative max-w-lg w-full bg-white/95 backdrop-blur-xl rounded-[32px] px-6 sm:px-8 lg:px-10 py-12 sm:py-14 text-center shadow-2xl animate-fade-up border border-white/60">
-                <h2 class="font-display text-3xl sm:text-4xl text-accent">Livre d'or</h2>
-                <p class="mt-4 text-sm sm:text-base text-ink-soft">Une pensée, un vœu, un souvenir… laissez un mot aux
-                    mariés.</p>
-                <label
-                    class="text-left w-full block font-semibold text-ink mt-10 mb-4 uppercase text-xs tracking-[0.24em]"
-                    for="message">Votre message</label>
-                <textarea
-                    class="w-full min-h-[150px] sm:min-h-[170px] rounded-3xl border border-black/5 bg-white/90 px-5 sm:px-6 py-4 text-left text-sm sm:text-base text-ink shadow-inner focus:outline-none focus:ring-2 focus:ring-accent/40 resize-y transition"
-                    id="message" placeholder="Écrivez votre message ici..."></textarea>
-                <button
-                    class="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-accent via-amber-400 to-orange-300 px-7 sm:px-9 py-3 text-white font-semibold tracking-wide shadow-glow hover:-translate-y-0.5 transition-transform"
-                    type="button">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 4h16v12H5.17L4 17.17z"></path>
-                        <path d="M8 8h8"></path>
-                        <path d="M8 12h5"></path>
+        <section class="relative px-6 sm:px-10 lg:px-16 py-16 bg-white rounded-[36px]">
+            <div class="max-w-3xl mx-auto text-center space-y-6">
+                <h2 class="font-display text-3xl text-accent">Confirmation de présence</h2>
+                @if (session('status'))
+                    <div class="alert alert-success bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-full">
+                        {{ session('status') }}
+                    </div>
+                @endif
+
+                @if ($guest->rsvp_status === 'confirmed')
+                    <p class="text-ink-soft text-lg">Merci {{ $guest->display_name }} ! Votre présence est confirmée.
+                        @if ($guest->rsvp_confirmed_at)
+                            <br><span class="text-sm text-ink/60">Confirmé le {{ $guest->rsvp_confirmed_at->format('d/m/Y à H\hi') }}</span>
+                        @endif
+                    </p>
+                @else
+                    <p class="text-ink-soft text-lg">Merci de confirmer votre présence avant le grand jour pour nous
+                        aider dans l’organisation.</p>
+                    <form id="confirm-form" action="{{ route('invitations.confirm', $guest->invitation_token) }}" method="POST"
+                        class="inline-flex flex-col items-center gap-4">
+                        @csrf
+                        <div id="preference-inputs"></div>
+                        <button type="submit"
+                            class="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-accent via-orange-400 to-amber-300 px-6 py-3 text-white font-semibold tracking-wide shadow-glow hover:-translate-y-0.5 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-accent/70">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 12l5 5l10 -10"></path>
                     </svg>
-                    Envoyer
+                            Je confirme ma présence
                 </button>
+                    </form>
+                @endif
             </div>
         </section>
     </main>
     <script>
+        const qrDataUri = @js($qrCodeDataUri);
+        const qrUrl = @js($qrCodeUrl);
+        const pdfAssets = @json($pdfAssets);
+    </script>
+    <script>
         document.addEventListener("DOMContentLoaded", () => {
-            const drinkButtons = Array.from(document.querySelectorAll(".drink-option[data-drink]"));
+            const drinkButtons = Array.from(document.querySelectorAll(".drink-option[data-beverage-id]"));
+            const confirmForm = document.getElementById('confirm-form');
+            const inputsContainer = document.getElementById('preference-inputs');
+            const selectedLabel = document.getElementById('selected-beverages-label');
             const maxSelections = 2;
-            const selectionOrder = [];
+            const selectionOrder = @json($selectedBeverageIds->all());
+            const beverageNames = @json($beverageMap);
+            const isConfirmed = @json($guest->rsvp_status === 'confirmed');
+
+            const updateSelectedLabel = () => {
+                if (!selectedLabel) return;
+                if (selectionOrder.length === 0) {
+                    selectedLabel.textContent = 'Aucune sélection';
+                    return;
+                }
+                selectedLabel.textContent = selectionOrder
+                    .map((id) => beverageNames[id] ?? '')
+                    .filter(Boolean)
+                    .join(', ');
+            };
+
+            const syncPreferenceInputs = () => {
+                if (!inputsContainer) return;
+                inputsContainer.innerHTML = '';
+                selectionOrder.forEach((id) => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'beverage_ids[]';
+                    input.value = id;
+                    inputsContainer.appendChild(input);
+                });
+            };
 
             const setPressedState = (btn, pressed) => {
                 btn.setAttribute("aria-pressed", pressed ? "true" : "false");
             };
 
             const unselectButton = (btn) => {
-                const value = btn.dataset.drink;
-                if (!value) return;
+                const value = Number(btn.dataset.beverageId);
+                if (!Number.isFinite(value)) return;
                 const index = selectionOrder.indexOf(value);
                 if (index !== -1) selectionOrder.splice(index, 1);
                 btn.classList.remove("is-selected");
@@ -973,12 +1228,12 @@
             };
 
             const selectButton = (btn) => {
-                const value = btn.dataset.drink;
-                if (!value) return;
+                const value = Number(btn.dataset.beverageId);
+                if (!Number.isFinite(value)) return;
                 if (selectionOrder.includes(value)) return;
                 if (selectionOrder.length === maxSelections) {
                     const removedValue = selectionOrder.shift();
-                    const removedBtn = drinkButtons.find((candidate) => candidate.dataset.drink === removedValue);
+                    const removedBtn = drinkButtons.find((candidate) => Number(candidate.dataset.beverageId) === removedValue);
                     if (removedBtn) {
                         removedBtn.classList.remove("is-selected");
                         setPressedState(removedBtn, false);
@@ -991,12 +1246,18 @@
 
             drinkButtons.forEach((btn) => {
                 setPressedState(btn, btn.classList.contains("is-selected"));
+                btn.disabled = isConfirmed;
                 btn.addEventListener("click", () => {
+                    if (isConfirmed) {
+                        return;
+                    }
                     if (btn.classList.contains("is-selected")) {
                         unselectButton(btn);
                     } else {
                         selectButton(btn);
                     }
+                    syncPreferenceInputs();
+                    updateSelectedLabel();
                 });
                 btn.addEventListener("keydown", (event) => {
                     if (event.key === " " || event.key === "Enter") {
@@ -1006,212 +1267,14 @@
                 });
             });
 
-            const downloadBtn = document.getElementById("download-invitation");
-            if (!downloadBtn) {
-                return;
+            syncPreferenceInputs();
+            updateSelectedLabel();
+
+            if (confirmForm) {
+                confirmForm.addEventListener('submit', () => {
+                    syncPreferenceInputs();
+                });
             }
-
-            if (window.location.protocol === "file:") {
-                downloadBtn.addEventListener("click", () => {
-                    alert("Pour générer le PDF, ouvrez cette page via un serveur local (ex. npx serve) ou uploadez-la en ligne. Les navigateurs bloquent l'accès aux fichiers locaux en mode file://");
-                });
-                downloadBtn.title = "Ouvrez la page via http:// pour activer le téléchargement";
-                return;
-            }
-
-            let assetsPromise;
-            const toDataUrl = async (url) => {
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`Impossible de charger ${url}`);
-                }
-                const blob = await response.blob();
-                return await new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(blob);
-                });
-            };
-
-            const loadAssets = () => {
-                if (!assetsPromise) {
-                    assetsPromise = Promise.all([
-                        toDataUrl("{{ asset('invitations/fond.jpeg') }}"),
-                        toDataUrl("{{ asset('invitations/bouquet.png') }}"),
-                        toDataUrl("https://api.qrserver.com/v1/create-qr-code/?size=360x360&data=https%3A%2F%2Fplanningevents-rdc.com%2Finvitation%2Fralph-daniella")
-                    ]).then(([background, bouquet, qr]) => ({ background, bouquet, qr }));
-                }
-                return assetsPromise;
-            };
-
-            const setBusy = (busy) => {
-                const labelEl = downloadBtn.querySelector(".download-label");
-                const iconEl = downloadBtn.querySelector(".download-icon");
-                const spinnerEl = downloadBtn.querySelector(".download-spinner");
-                if (!downloadBtn.dataset.originalLabel && labelEl) {
-                    downloadBtn.dataset.originalLabel = (labelEl.textContent || "").trim();
-                }
-
-                if (busy) {
-                    downloadBtn.disabled = true;
-                    downloadBtn.classList.add("opacity-80", "cursor-wait", "scale-[0.98]", "is-loading");
-                    downloadBtn.setAttribute("aria-busy", "true");
-                    if (labelEl) {
-                        labelEl.textContent = "Génération en cours...";
-                    }
-                    if (iconEl) {
-                        iconEl.setAttribute("aria-hidden", "true");
-                    }
-                    if (spinnerEl) {
-                        spinnerEl.setAttribute("aria-hidden", "false");
-                    }
-                } else {
-                    downloadBtn.disabled = false;
-                    downloadBtn.classList.remove("opacity-80", "cursor-wait", "scale-[0.98]", "is-loading");
-                    downloadBtn.removeAttribute("aria-busy");
-                    if (labelEl) {
-                        labelEl.textContent = downloadBtn.dataset.originalLabel || "Télécharger l'invitation";
-                    }
-                    if (iconEl) {
-                        iconEl.removeAttribute("aria-hidden");
-                    }
-                    if (spinnerEl) {
-                        spinnerEl.setAttribute("aria-hidden", "true");
-                    }
-                }
-            };
-
-            const initialisePdfDownload = () => {
-                if (!window.jspdf || !window.jspdf.jsPDF || downloadBtn.dataset.pdfReady === "true") {
-                    return Boolean(downloadBtn.dataset.pdfReady === "true");
-                }
-
-                downloadBtn.dataset.pdfReady = "true";
-                const { jsPDF } = window.jspdf;
-
-                downloadBtn.addEventListener("click", async () => {
-                    setBusy(true);
-                    try {
-                        const assets = await loadAssets();
-                        const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-                        const pageWidth = doc.internal.pageSize.getWidth();
-                        const pageHeight = doc.internal.pageSize.getHeight();
-
-                        // --- Image de fond ---
-                        doc.addImage(assets.background, "JPEG", 0, 0, pageWidth, pageHeight, undefined, "FAST");
-
-                        // --- Bloc principal (fond ivoire clair, sans alpha) ---
-                        doc.setFillColor(255, 253, 249);
-                        doc.roundedRect(14, 20, pageWidth - 28, pageHeight - 40, 10, 10, "F");
-
-                        // --- Bande décorative dorée pâle ---
-                        doc.setFillColor(240, 205, 133);
-                        doc.roundedRect(20, 30, pageWidth - 40, 70, 14, 14, "F");
-
-                        // --- Images florales ---
-                        doc.addImage(assets.bouquet, "PNG", 24, 32, 45, 48, undefined, "FAST");
-                        doc.addImage(assets.bouquet, "PNG", pageWidth - 68, pageHeight - 92, 44, 47, undefined, "FAST");
-
-                        // --- Fonctions utilitaires pour centrer / aligner le texte ---
-                        const centerText = (text, y, size = 16, font = "times", style = "normal") => {
-                            doc.setFont(font, style);
-                            doc.setFontSize(size);
-                            doc.text(text, pageWidth / 2, y, { align: "center" });
-                        };
-
-                        const leftText = (text, x, y, size = 11, font = "helvetica", style = "normal") => {
-                            doc.setFont(font, style);
-                            doc.setFontSize(size);
-                            doc.text(text, x, y);
-                        };
-
-                        // --- Titres principaux ---
-                        doc.setTextColor(189, 137, 61);
-                        centerText("Save the Date", 46, 13, "helvetica", "bold");
-
-                        doc.setTextColor(204, 149, 69);
-                        centerText("Raphael & Daniella", 66, 30, "times", "italic");
-
-                        doc.setTextColor(71, 58, 48);
-                        centerText("Mariage — 29 novembre 2025", 82, 13, "helvetica", "normal");
-
-                        // --- Ligne décorative ---
-                        doc.setDrawColor(214, 170, 95);
-                        doc.setLineWidth(0.3);
-                        doc.line(50, 90, pageWidth - 50, 90);
-
-                        // --- Programme ---
-                        doc.setTextColor(186, 132, 58);
-                        centerText("Programme de la journée", 106, 12, "helvetica", "bold");
-
-                        doc.setTextColor(204, 149, 69);
-                        leftText("10h00", 32, 124, 13, "helvetica", "bold");
-
-                        doc.setTextColor(71, 58, 48);
-                        leftText("Bénédiction Nuptiale", 32, 134, 12, "times", "italic");
-                        leftText("Église La Borne Cité verte", 32, 146);
-                        leftText("13e rue cité verte (Réf. École Pierre Bouvet)", 32, 155, 10);
-
-                        doc.setTextColor(204, 149, 69);
-                        leftText("19h30", pageWidth / 2 + 6, 124, 13, "helvetica", "bold");
-
-                        doc.setTextColor(71, 58, 48);
-                        leftText("Soirée Dansante", pageWidth / 2 + 6, 134, 12, "times", "italic");
-                        leftText("Salle de fête Sanam Center", pageWidth / 2 + 6, 146);
-                        leftText("13B avenue Basoko – Gombe (Réf. Orca)", pageWidth / 2 + 6, 155, 10);
-
-                        // --- Texte de conclusion ---
-                        doc.setTextColor(94, 75, 61);
-                        centerText("Nous avons hâte de célébrer ce moment", 181, 10.5, "helvetica", "normal");
-                        centerText("à vos côtés. Merci de confirmer votre présence.", 189, 10.5, "helvetica", "normal");
-
-                        // --- QR Code et encadrement doré ---
-                        const qrSize = 46;
-                        const qrX = pageWidth / 2 - qrSize / 2;
-                        const qrY = 198;
-                        doc.setDrawColor(243, 195, 74);
-                        doc.setLineWidth(0.6);
-                        doc.roundedRect(qrX - 7, qrY - 7, qrSize + 14, qrSize + 14, 8, 8, "S");
-                        doc.addImage(assets.qr, "PNG", qrX, qrY, qrSize, qrSize, undefined, "FAST");
-
-                        // --- Infos additionnelles ---
-                        doc.setFont("helvetica", "italic");
-                        doc.setFontSize(9.5);
-                        doc.setTextColor(102, 78, 62);
-                        doc.text("RSVP : planningevents-rdc.com/invitation/ralph-daniella", pageWidth / 2, qrY + qrSize + 16, { align: "center" });
-                        doc.text("Dress code : Chic et nuances chaleureuses", pageWidth / 2, qrY + qrSize + 23.5, { align: "center" });
-
-                        // --- Sauvegarde ---
-                        doc.save("Invitation-Raphael-Daniella.pdf");
-
-                    }
-                    catch (error) {
-                        console.error(error);
-                        alert("Impossible de générer le PDF pour le moment. Veuillez réessayer.");
-                    } finally {
-                        setBusy(false);
-                    }
-                });
-
-                return true;
-            };
-
-            const waitForJsPdf = (attempt = 0) => {
-                if (initialisePdfDownload()) {
-                    return;
-                }
-                if (attempt >= 60) {
-                    console.error("jsPDF n'a pas pu être chargé.");
-                    downloadBtn.addEventListener("click", () => {
-                        alert("Le générateur PDF ne s'est pas chargé correctement. Vérifiez votre connexion puis actualisez la page.");
-                    }, { once: true });
-                    return;
-                }
-                setTimeout(() => waitForJsPdf(attempt + 1), 100);
-            };
-
-            waitForJsPdf();
         });
     </script>
     <script>
@@ -1243,6 +1306,7 @@
                     mainContent.classList.add("revealed");
                     mainContent.classList.remove("pre-reveal");
                     document.body.classList.remove("no-scroll");
+                    window.dispatchEvent(new CustomEvent('invitation:revealed'));
                 }, 2800);
 
                 setTimeout(() => {
@@ -1306,6 +1370,234 @@
                     }
                 }, 450);
             }
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const downloadBtn = document.getElementById("download-invitation");
+            const downloadMessage = document.getElementById("download-message");
+            if (!downloadBtn) {
+                return;
+            }
+
+            const showDownloadMessage = (text, type = 'info') => {
+                if (!downloadMessage) return;
+                downloadMessage.textContent = text;
+                downloadMessage.className = type === 'error'
+                    ? 'text-sm text-red-200'
+                    : 'text-sm text-white/90';
+            };
+
+            if (window.location.protocol === "file:") {
+                downloadBtn.addEventListener("click", () => {
+                    alert("Pour générer le PDF, ouvrez cette page via un serveur local (ex. npx serve) ou uploadez-la en ligne. Les navigateurs bloquent l'accès aux fichiers locaux en mode file://");
+                });
+                downloadBtn.title = "Ouvrez la page via http:// pour activer le téléchargement";
+                showDownloadMessage("Téléchargement indisponible en mode file://", 'error');
+                return;
+            }
+
+            let assetsPromise;
+
+            if (!pdfAssets || !pdfAssets.background || !pdfAssets.bouquet) {
+                downloadBtn.disabled = true;
+                downloadBtn.classList.add("opacity-60", "cursor-not-allowed");
+                showDownloadMessage("Ressources manquantes pour générer le PDF. Contactez l'organisateur.", 'error');
+                return;
+            }
+
+            const loadAssets = () => {
+                if (!assetsPromise) {
+                    assetsPromise = Promise.resolve().then(() => {
+                        const fallbackQr = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8+B8AAwMCAO4P8LkAAAAASUVORK5CYII=';
+
+                        if (!pdfAssets?.background || !pdfAssets?.bouquet) {
+                            throw new Error("Ressources graphiques manquantes pour générer le PDF.");
+                        }
+
+                        return {
+                            background: pdfAssets.background,
+                            bouquet: pdfAssets.bouquet,
+                            qr: qrDataUri || fallbackQr,
+                        };
+                    });
+                }
+                return assetsPromise;
+            };
+
+            const setBusy = (busy) => {
+                const labelEl = downloadBtn.querySelector(".download-label");
+                const iconEl = downloadBtn.querySelector(".download-icon");
+                const spinnerEl = downloadBtn.querySelector(".download-spinner");
+                if (!downloadBtn.dataset.originalLabel && labelEl) {
+                    downloadBtn.dataset.originalLabel = (labelEl.textContent || "").trim();
+                }
+
+                if (busy) {
+                    downloadBtn.disabled = true;
+                    downloadBtn.classList.add("opacity-80", "cursor-wait", "scale-[0.98]", "is-loading");
+                    downloadBtn.setAttribute("aria-busy", "true");
+                    if (labelEl) {
+                        labelEl.textContent = "Génération en cours...";
+                    }
+                    if (iconEl) {
+                        iconEl.setAttribute("aria-hidden", "true");
+                    }
+                    if (spinnerEl) {
+                        spinnerEl.setAttribute("aria-hidden", "false");
+                    }
+                } else {
+                    downloadBtn.disabled = false;
+                    downloadBtn.classList.remove("opacity-80", "cursor-wait", "scale-[0.98]", "is-loading");
+                    downloadBtn.removeAttribute("aria-busy");
+                    if (labelEl) {
+                        labelEl.textContent = downloadBtn.dataset.originalLabel || "Télécharger l'invitation";
+                    }
+                    if (iconEl) {
+                        iconEl.removeAttribute("aria-hidden");
+                    }
+                    if (spinnerEl) {
+                        spinnerEl.setAttribute("aria-hidden", "true");
+                    }
+                }
+            };
+
+            const initialisePdfDownload = () => {
+                if (!window.jspdf || !window.jspdf.jsPDF || downloadBtn.dataset.pdfReady === "true") {
+                    return Boolean(downloadBtn.dataset.pdfReady === "true");
+                }
+
+                downloadBtn.dataset.pdfReady = "true";
+                const { jsPDF } = window.jspdf;
+
+                downloadBtn.addEventListener("click", async () => {
+                    setBusy(true);
+                    showDownloadMessage('');
+                    try {
+                        const assets = await loadAssets();
+                        const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+                        const pageWidth = doc.internal.pageSize.getWidth();
+                        const pageHeight = doc.internal.pageSize.getHeight();
+
+                        // --- Image de fond ---
+                        doc.addImage(assets.background, "JPEG", 0, 0, pageWidth, pageHeight, undefined, "FAST");
+
+                        // --- Bloc principal (fond ivoire clair, sans alpha) ---
+                        doc.setFillColor(255, 253, 249);
+                        doc.roundedRect(14, 20, pageWidth - 28, pageHeight - 40, 10, 10, "F");
+
+                        // --- Bande décorative dorée pâle ---
+                        doc.setFillColor(240, 205, 133);
+                        doc.roundedRect(20, 30, pageWidth - 40, 70, 14, 14, "F");
+
+                        // --- Images florales ---
+                        doc.addImage(assets.bouquet, "PNG", 24, 32, 45, 48, undefined, "FAST");
+                        doc.addImage(assets.bouquet, "PNG", pageWidth - 68, pageHeight - 92, 44, 47, undefined, "FAST");
+
+                        // --- Fonctions utilitaires pour centrer / aligner le texte ---
+                        const centerText = (text, y, size = 16, font = "times", style = "normal") => {
+                            doc.setFont(font, style);
+                            doc.setFontSize(size);
+                            doc.text(text, pageWidth / 2, y, { align: "center" });
+                        };
+
+                        const leftText = (text, x, y, size = 11, font = "helvetica", style = "normal") => {
+                            doc.setFont(font, style);
+                            doc.setFontSize(size);
+                            doc.text(text, x, y);
+                        };
+
+                        // --- Titres principaux ---
+                        doc.setTextColor(189, 137, 61);
+                        centerText("Save the Date", 46, 13, "helvetica", "bold");
+
+                        doc.setTextColor(204, 149, 69);
+                        centerText({{ json_encode($event['couple_names'] ?? 'Nos mariés') }}, 66, 30, "times", "italic");
+
+                        doc.setTextColor(71, 58, 48);
+                        centerText("Mariage — 29 novembre 2025", 82, 13, "helvetica", "normal");
+
+                        // --- Ligne décorative ---
+                        doc.setDrawColor(214, 170, 95);
+                        doc.setLineWidth(0.3);
+                        doc.line(50, 90, pageWidth - 50, 90);
+
+                        // --- Programme ---
+                        doc.setTextColor(186, 132, 58);
+                        centerText("Programme de la journée", 106, 12, "helvetica", "bold");
+
+                        doc.setTextColor(204, 149, 69);
+                        leftText("10h00", 32, 124, 13, "helvetica", "bold");
+
+                        doc.setTextColor(71, 58, 48);
+                        leftText("Bénédiction Nuptiale", 32, 134, 12, "times", "italic");
+                        leftText("Église La Borne Cité verte", 32, 146);
+                        leftText("12e rue", 32, 155, 10);
+                        leftText("Réf: ex Promedis ou N6", 32, 164, 10);
+
+                        doc.setTextColor(204, 149, 69);
+                        leftText("19h00", pageWidth / 2 + 6, 124, 13, "helvetica", "bold");
+
+                        doc.setTextColor(71, 58, 48);
+                        leftText("Soirée Dansante", pageWidth / 2 + 6, 134, 12, "times", "italic");
+
+                        leftText("Salle Malaïka", pageWidth / 2 + 6, 146);
+                        leftText("C/ Ngaliema, route de Matadi, Q/ Météo", pageWidth / 2 + 6, 155, 10);
+                        leftText("Réf: Regideso", pageWidth / 2 + 6, 164, 10);
+
+                        // --- Texte de conclusion ---
+                        doc.setTextColor(94, 75, 61);
+                        centerText("Nous avons hâte de célébrer ce moment", 181, 10.5, "helvetica", "normal");
+                        centerText("à vos côtés. Merci de confirmer votre présence.", 189, 10.5, "helvetica", "normal");
+
+                        // --- QR Code et encadrement doré ---
+                        const qrSize = 46;
+                        const qrX = pageWidth / 2 - qrSize / 2;
+                        const qrY = 198;
+                        doc.setDrawColor(243, 195, 74);
+                        doc.setLineWidth(0.6);
+                        doc.roundedRect(qrX - 7, qrY - 7, qrSize + 14, qrSize + 14, 8, 8, "S");
+                        doc.addImage(assets.qr, "PNG", qrX, qrY, qrSize, qrSize, undefined, "FAST");
+
+                        // --- Infos additionnelles ---
+                        doc.setFont("helvetica", "italic");
+                        doc.setFontSize(9.5);
+                        doc.setTextColor(102, 78, 62);
+                        doc.text("RSVP : {{ $invitationUrl }}", pageWidth / 2, qrY + qrSize + 16, { align: "center" });
+                        doc.text("Dress code : {{ $event['dress_code'] ?? 'Chic et Élégant' }}", pageWidth / 2, qrY + qrSize + 23.5, { align: "center" });
+
+                        // --- Sauvegarde ---
+                        doc.save({{ json_encode($event['pdf_filename'] ?? 'invitation.pdf') }});
+                        showDownloadMessage('Invitation téléchargée !');
+                    }
+                    catch (error) {
+                        console.error(error);
+                        showDownloadMessage("Impossible de générer le PDF pour le moment. Veuillez réessayer.", 'error');
+                    } finally {
+                        setBusy(false);
+                    }
+                });
+
+                return true;
+            };
+
+            const waitForJsPdf = (attempt = 0) => {
+                if (initialisePdfDownload()) {
+                    return;
+                }
+                if (attempt >= 60) {
+                    console.error("jsPDF n'a pas pu être chargé.");
+                    showDownloadMessage("Le générateur PDF n'a pas pu se charger. Rechargez la page et vérifiez votre connexion.", 'error');
+                    downloadBtn.addEventListener("click", () => {
+                        alert("Le générateur PDF ne s'est pas chargé correctement. Vérifiez votre connexion puis actualisez la page.");
+                    }, { once: true });
+                    return;
+                }
+                setTimeout(() => waitForJsPdf(attempt + 1), 100);
+            };
+
+            waitForJsPdf();
         });
     </script>
 </body>

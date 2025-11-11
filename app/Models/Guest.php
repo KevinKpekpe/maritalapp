@@ -18,10 +18,14 @@ class Guest extends Model
         'secondary_first_name',
         'phone',
         'email',
+        'invitation_token',
+        'rsvp_status',
+        'rsvp_confirmed_at',
     ];
 
     protected $casts = [
         'deleted_at' => 'datetime',
+        'rsvp_confirmed_at' => 'datetime',
     ];
 
     public function table()

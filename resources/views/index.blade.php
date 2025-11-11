@@ -20,13 +20,29 @@
             </div>
         </div>
     </div>
+    @php
+        $stats = array_merge([
+            'guests_total' => 0,
+            'guests_pending' => 0,
+            'guests_confirmed' => 0,
+            'tables_total' => 0,
+        ], $stats ?? []);
+    @endphp
     <div class="col-md-6 col-xl-3">
         <div class="card">
             <div class="card-body">
                 <h6 class="mb-2 f-w-400 text-muted">Total des invités</h6>
-                <h4 class="mb-3">180 <span class="badge bg-light-success border border-success"><i
-                            class="ti ti-trending-up"></i> +12</span></h4>
-                <p class="mb-0 text-muted text-sm">Ajouts cette semaine : <span class="text-success">8</span></p>
+                <h4 class="mb-0">{{ number_format($stats['guests_total']) }}</h4>
+                <p class="mb-0 text-muted text-sm">Invités actifs enregistrés</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="mb-2 f-w-400 text-muted">Invités en attente</h6>
+                <h4 class="mb-0 text-warning">{{ number_format($stats['guests_pending']) }}</h4>
+                <p class="mb-0 text-muted text-sm">RSVP non confirmé</p>
             </div>
         </div>
     </div>
@@ -34,29 +50,17 @@
         <div class="card">
             <div class="card-body">
                 <h6 class="mb-2 f-w-400 text-muted">Confirmations reçues</h6>
-                <h4 class="mb-3">124 <span class="badge bg-light-primary border border-primary"><i
-                            class="ti ti-trending-up"></i> 68%</span></h4>
-                <p class="mb-0 text-muted text-sm">En attente : <span class="text-primary">56</span></p>
+                <h4 class="mb-0 text-success">{{ number_format($stats['guests_confirmed']) }}</h4>
+                <p class="mb-0 text-muted text-sm">Invités ayant confirmé leur présence</p>
             </div>
         </div>
     </div>
     <div class="col-md-6 col-xl-3">
         <div class="card">
             <div class="card-body">
-                <h6 class="mb-2 f-w-400 text-muted">Tables planifiées</h6>
-                <h4 class="mb-3">18 <span class="badge bg-light-warning border border-warning"><i
-                            class="ti ti-trending-up"></i> 90%</span></h4>
-                <p class="mb-0 text-muted text-sm">Places restantes : <span class="text-warning">12</span></p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card">
-            <div class="card-body">
-                <h6 class="mb-2 f-w-400 text-muted">Invitations envoyées</h6>
-                <h4 class="mb-3">200 <span class="badge bg-light-danger border border-danger"><i
-                            class="ti ti-trending-down"></i> 5%</span></h4>
-                <p class="mb-0 text-muted text-sm">Relances prévues : <span class="text-danger">15</span></p>
+                <h6 class="mb-2 f-w-400 text-muted">Tables actives</h6>
+                <h4 class="mb-0 text-primary">{{ number_format($stats['tables_total']) }}</h4>
+                <p class="mb-0 text-muted text-sm">Tables disponibles pour les invités</p>
             </div>
         </div>
     </div>

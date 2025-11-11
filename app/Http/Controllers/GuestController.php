@@ -7,6 +7,7 @@ use App\Models\ReceptionTable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class GuestController extends Controller
@@ -61,6 +62,8 @@ class GuestController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validateData($request);
+        $data['invitation_token'] = Str::uuid()->toString();
+        $data['rsvp_status'] = 'pending';
 
         Guest::create($data);
 
@@ -78,6 +81,10 @@ class GuestController extends Controller
     public function update(Request $request, Guest $guest): RedirectResponse
     {
         $data = $this->validateData($request, $guest->id);
+
+        if (! $guest->invitation_token) {
+            $data['invitation_token'] = Str::uuid()->toString();
+        }
 
         $guest->update($data);
 

@@ -3,16 +3,38 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BeverageController;
 use App\Http\Controllers\GuestController;
+use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\PreferenceController;
 use App\Http\Controllers\TableController;
+use App\Models\Guest;
+use App\Models\ReceptionTable;
 use Illuminate\Support\Facades\Route;
+
+Route::get('invitations/{token}', [InvitationController::class, 'show'])->name('invitations.show');
+Route::post('invitations/{token}/confirm', [InvitationController::class, 'confirm'])->name('invitations.confirm');
+Route::post('invitations/{token}/preferences', [InvitationController::class, 'updatePreferences'])->name('invitations.preferences');
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
 
 Route::middleware('auth.session')->group(function () {
     Route::get('/', function () {
-        return view('index');
+        $totalGuests = Guest::count();
+        $confirmedGuests = Guest::where('rsvp_status', 'confirmed')->count();
+        $pendingGuests = Guest::where(static function ($query) {
+            $query->whereNull('rsvp_status')
+                ->orWhere('rsvp_status', 'pending');
+        })->count();
+        $tableCount = ReceptionTable::count();
+
+        return view('index', [
+            'stats' => [
+                'guests_total' => $totalGuests,
+                'guests_confirmed' => $confirmedGuests,
+                'guests_pending' => $pendingGuests,
+                'tables_total' => $tableCount,
+            ],
+        ]);
     });
 
     Route::get('guests/search', [GuestController::class, 'search'])->name('guests.search');
@@ -28,10 +50,6 @@ Route::middleware('auth.session')->group(function () {
 
     Route::get('beverages/search', [BeverageController::class, 'search'])->name('beverages.search');
     Route::resource('beverages', BeverageController::class)->except(['show']);
-
-    Route::get('invitations/show', function () {
-        return view('invitations.invitation');
-    })->name('invitations.show');
 
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 });

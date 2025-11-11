@@ -16,6 +16,8 @@
                     <th>Table</th>
                     <th>Téléphone</th>
                     <th>Email</th>
+                    <th>Statut RSVP</th>
+                    <th>Invitation</th>
                     <th>Créé le</th>
                     <th>Archivé le</th>
                     <th class="text-end">Actions</th>
@@ -42,6 +44,34 @@
                         </td>
                         <td>{{ $guest->phone }}</td>
                         <td>{{ $guest->email ?? '—' }}</td>
+                        <td>
+                            @php
+                                $status = $guest->rsvp_status;
+                            @endphp
+                            @if ($status === 'confirmed')
+                                <span class="badge bg-light-success border border-success text-success">
+                                    Confirmé
+                                    @if ($guest->rsvp_confirmed_at)
+                                        <span class="d-block small fw-normal text-success mt-1">
+                                            {{ $guest->rsvp_confirmed_at->format('d/m/Y H\hi') }}
+                                        </span>
+                                    @endif
+                                </span>
+                            @elseif ($status === 'declined')
+                                <span class="badge bg-light-danger border border-danger text-danger">Décliné</span>
+                            @else
+                                <span class="badge bg-light-secondary border border-secondary text-secondary">En attente</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if ($guest->invitation_token)
+                                <a href="{{ route('invitations.show', $guest->invitation_token) }}" class="btn btn-soft-primary btn-sm" target="_blank" rel="noopener">
+                                    <i class="ti ti-external-link me-1"></i> Voir
+                                </a>
+                            @else
+                                <span class="text-muted">Non générée</span>
+                            @endif
+                        </td>
                         <td>{{ $guest->created_at?->format('d/m/Y') }}</td>
                         <td>{{ $guest->deleted_at?->format('d/m/Y') ?? '—' }}</td>
                         <td class="text-end">

@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Beverage;
-use App\Models\Guest;
 use App\Models\GuestPreference;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

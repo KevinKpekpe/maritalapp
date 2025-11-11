@@ -13,7 +13,6 @@
                     <th>Catégorie</th>
                     <th>Notes</th>
                     <th>Ajoutée le</th>
-                    <th class="text-end">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -43,18 +42,6 @@
                         </td>
                         <td>{{ $preference->notes ? \Illuminate\Support\Str::limit($preference->notes, 80) : '—' }}</td>
                         <td>{{ $preference->created_at?->format('d/m/Y H:i') }}</td>
-                        <td class="text-end">
-                            <a href="{{ route('preferences.edit', $preference) }}" class="btn btn-outline-warning btn-sm me-2" title="Modifier">
-                                <i class="ti ti-edit me-1"></i> Modifier
-                            </a>
-                            <form action="{{ route('preferences.destroy', $preference) }}" method="POST" class="d-inline" onsubmit="return confirm('Supprimer cette préférence ?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Supprimer">
-                                    <i class="ti ti-trash me-1"></i> Supprimer
-                                </button>
-                            </form>
-                        </td>
                     </tr>
                 @endforeach
             </tbody>
