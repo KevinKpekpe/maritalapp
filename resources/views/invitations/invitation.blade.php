@@ -972,29 +972,21 @@
                             @if ($downloadNotice)
                                 <div class="text-xs text-white/70 max-w-sm">{{ $downloadNotice }}</div>
                             @endif
-                            <div id="download-message" class="text-sm text-white/90" aria-live="polite"></div>
-                        <button id="download-invitation"
-                            class="download-button relative inline-flex items-center justify-center gap-3 rounded-full bg-linear-to-r from-accent via-orange-400/80 to-amber-300 px-8 py-3 text-sm sm:text-base text-white font-semibold tracking-wide shadow-lg transition-transform hover:-translate-y-1 hover:shadow-glow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-accent/70"
-                                type="button" aria-live="polite">
-                            <span class="download-button__overlay"></span>
-                            <span class="download-button__content">
-                                <span class="download-label">Télécharger l'invitation</span>
-                                <svg class="download-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path d="M7 17h10"></path>
-                                    <path d="M12 3v11"></path>
-                                    <path d="M8.5 12.5L12 16l3.5-3.5"></path>
-                                </svg>
-                                <span class="download-spinner" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                                        stroke-linecap="round">
-                                        <path d="M12 3a9 9 0 1 1-9 9" stroke-opacity="0.35"></path>
-                                        <path d="M21 12a9 9 0 0 0-9-9" stroke-linecap="round"></path>
+                            <a href="{{ route('invitations.download', $guest->invitation_token) }}"
+                                class="download-button relative inline-flex items-center justify-center gap-3 rounded-full bg-linear-to-r from-accent via-orange-400/80 to-amber-300 px-8 py-3 text-sm sm:text-base text-white font-semibold tracking-wide shadow-lg transition-transform hover:-translate-y-1 hover:shadow-glow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-accent/70"
+                                target="_blank" rel="noopener">
+                                <span class="download-button__overlay"></span>
+                                <span class="download-button__content">
+                                    <span class="download-label">Télécharger l'invitation</span>
+                                    <svg class="download-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M7 17h10"></path>
+                                        <path d="M12 3v11"></path>
+                                        <path d="M8.5 12.5L12 16l3.5-3.5"></path>
                                     </svg>
                                 </span>
-                            </span>
-                        </button>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -1373,7 +1365,12 @@
         });
     </script>
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
+        const initInvitationDownload = () => {
+            if (window.__invitationDownloadInitialized) {
+                return;
+            }
+            window.__invitationDownloadInitialized = true;
+
             console.debug("[Invitation] Script de téléchargement initialisé");
             const downloadBtn = document.getElementById("download-invitation");
             const downloadMessage = document.getElementById("download-message");
@@ -1457,46 +1454,43 @@
                 }
             };
 
-            let assetsPromise;
-
             const loadAssets = () => {
-                if (!assetsPromise) {
-                    console.debug("[Invitation] Chargement des assets du PDF...");
-                    assetsPromise = Promise.resolve().then(async () => {
-                        const fallbackQr = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8+B8AAwMCAO4P8LkAAAAASUVORK5CYII=';
+                console.debug("[Invitation] Chargement des assets du PDF...");
+                return Promise.resolve().then(async () => {
+                    const fallbackQr = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8+B8AAwMCAO4P8LkAAAAASUVORK5CYII=';
 
-                        const background = pdfAssets?.background
-                            ?? (pdfAssetUrls?.background ? await toDataUrl(pdfAssetUrls.background) : null);
-                        const bouquet = pdfAssets?.bouquet
-                            ?? (pdfAssetUrls?.bouquet ? await toDataUrl(pdfAssetUrls.bouquet) : null);
+                    const background = pdfAssets && pdfAssets.background
+                        ? pdfAssets.background
+                        : (pdfAssetUrls && pdfAssetUrls.background ? await toDataUrl(pdfAssetUrls.background) : null);
+                    const bouquet = pdfAssets && pdfAssets.bouquet
+                        ? pdfAssets.bouquet
+                        : (pdfAssetUrls && pdfAssetUrls.bouquet ? await toDataUrl(pdfAssetUrls.bouquet) : null);
 
-                        console.debug("[Invitation][loadAssets] Ressources chargées ?", {
-                            background: Boolean(background),
-                            bouquet: Boolean(bouquet),
-                            qr: Boolean(qrDataUri),
-                            viaDataUri: Boolean(pdfAssets?.background && pdfAssets?.bouquet),
-                            viaFetch: Boolean(!pdfAssets?.background && pdfAssetUrls?.background),
-                        });
-
-                        if (!background || !bouquet) {
-                            console.error("[Invitation][loadAssets] Ressources manquantes", { background, bouquet });
-                            throw new Error("Ressources graphiques manquantes pour générer le PDF.");
-                        }
-
-                        const payload = {
-                            background,
-                            bouquet,
-                            qr: qrDataUri || fallbackQr,
-                        };
-                        console.debug("[Invitation][loadAssets] Payload prêt", payload);
-                        return payload;
+                    console.debug("[Invitation][loadAssets] Ressources chargées ?", {
+                        background: Boolean(background),
+                        bouquet: Boolean(bouquet),
+                        qr: Boolean(qrDataUri),
+                        viaDataUri: Boolean(pdfAssets && pdfAssets.background && pdfAssets.bouquet),
+                        viaFetch: Boolean(!(pdfAssets && pdfAssets.background) && pdfAssetUrls && pdfAssetUrls.background),
                     });
-                }
-                return assetsPromise;
+
+                    if (!background || !bouquet) {
+                        console.error("[Invitation][loadAssets] Ressources manquantes", { background, bouquet });
+                        throw new Error("Ressources graphiques manquantes pour générer le PDF.");
+                    }
+
+                    const payload = {
+                        background,
+                        bouquet,
+                        qr: qrDataUri || fallbackQr,
+                    };
+                    console.debug("[Invitation][loadAssets] Payload prêt", payload);
+                    return payload;
+                });
             };
 
             const ensureJsPdf = () => {
-                if (window.jspdf?.jsPDF) {
+                if (window.jspdf && window.jspdf.jsPDF) {
                     console.debug("[Invitation] jsPDF déjà disponible");
                     return Promise.resolve(window.jspdf.jsPDF);
                 }
@@ -1511,7 +1505,7 @@
                     script.src = "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
                     script.async = true;
                     script.onload = () => {
-                        if (window.jspdf?.jsPDF) {
+                        if (window.jspdf && window.jspdf.jsPDF) {
                             console.debug("[Invitation] jsPDF chargé via fallback");
                             resolve(window.jspdf.jsPDF);
                         } else {
@@ -1530,7 +1524,9 @@
                 setBusy(true);
                 showDownloadMessage('');
                 try {
-                    const [jsPDF, assets] = await Promise.all([ensureJsPdf(), loadAssets()]);
+                    const results = await Promise.all([ensureJsPdf(), loadAssets()]);
+                    const jsPDF = results[0];
+                    const assets = results[1];
                     console.debug("[Invitation] jsPDF et assets prêts, génération du PDF", assets);
                     const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
@@ -1624,7 +1620,12 @@
                     setBusy(false);
                 }
             });
-        });
+
+            console.debug("[Invitation] Gestionnaire de téléchargement prêt");
+        };
+
+        window.addEventListener("load", initInvitationDownload, { once: true });
+        initInvitationDownload();
     </script>
 </body>
 

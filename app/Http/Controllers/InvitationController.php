@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Beverage;
 use App\Models\Guest;
 use App\Models\GuestPreference;
@@ -21,69 +22,35 @@ class InvitationController extends Controller
             ->where('invitation_token', $token)
             ->firstOrFail();
 
-        $invitationUrl = route('invitations.show', $guest->invitation_token);
-        $qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=380x380&data=' . urlencode($invitationUrl);
-        $qrCodeDataUri = null;
-        $downloadNotice = null;
+        $data = $this->buildInvitationData($guest, true);
 
-        try {
-            $response = Http::timeout(5)->withoutVerifying()->withHeaders([
-                'Accept' => 'image/png',
-            ])->get($qrCodeUrl);
-            if ($response->successful()) {
-                $qrCodeDataUri = 'data:image/png;base64,' . base64_encode($response->body());
-            }
-        } catch (\Throwable $exception) {
-            report($exception);
-            $downloadNotice = "Le QR code n'a pas pu être récupéré. Vérifiez votre connexion avant de télécharger.";
-        }
+        return view('invitations.invitation', $data);
+    }
 
-        if (! $qrCodeDataUri) {
-            $qrCodeDataUri = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8+B8AAwMCAO4P8LkAAAAASUVORK5CYII=';
-            $downloadNotice = $downloadNotice ?? "Le téléchargement fonctionne avec un QR générique. Connectez-vous à Internet pour un QR personnalisé.";
-        }
+    public function download(string $token)
+    {
+        $guest = Guest::with('table')
+            ->where('invitation_token', $token)
+            ->firstOrFail();
 
-        $event = [
-            'page_title' => 'Mariage Raphael et Daniella',
-            'couple_names' => 'Raphael et Daniella',
-            'date_long' => 'Samedi 29 novembre 2025',
-            'ceremony_time' => '10h00',
-            'ceremony_title' => 'Bénédiction Nuptiale',
-            'ceremony_location' => "Église La Borne Cité verte\n12e rue\nRéf: ex Promedis ou N6",
-            'ceremony_map_query' => 'Église La Borne Cité Verte 12e Rue Kinshasa',
-            'reception_time' => '19h00',
-            'reception_title' => 'Soirée dansante',
-            'reception_location' => "Salle Malaïka\nC/ Ngaliema, route de Matadi, Q/ Météo\nRéf: Regideso",
-            'reception_map_query' => 'Salle Malaïka Ngaliema Kinshasa',
-            'dress_code' => 'Chic et Élégant',
-        ];
-        $event['pdf_filename'] = 'Invitation-' . Str::slug($event['couple_names'] ?? 'mariage', '-') . '.pdf';
+        $data = $this->buildInvitationData($guest, false);
 
-        $pdfAssets = [
-            'background' => $this->encodePublicAsset('invitations/fond.jpeg'),
-            'bouquet' => $this->encodePublicAsset('invitations/bouquet.png'),
-        ];
-        $pdfAssetUrls = [
-            'background' => asset('invitations/fond.jpeg'),
-            'bouquet' => asset('invitations/bouquet.png'),
-        ];
-
-        $allBeverages = Beverage::orderBy('name')->get();
-        $beverages = $allBeverages->groupBy('category')->map(fn ($group) => $group->values());
-        $beverageMap = $allBeverages->keyBy('id')->map->name;
-
-        return view('invitations.invitation', [
-            'guest' => $guest,
-            'event' => $event,
-            'invitationUrl' => $invitationUrl,
-            'qrCodeUrl' => $qrCodeUrl,
-            'qrCodeDataUri' => $qrCodeDataUri,
-            'beverages' => $beverages,
-            'beverageMap' => $beverageMap,
-            'downloadNotice' => $downloadNotice,
-            'pdfAssets' => $pdfAssets,
-            'pdfAssetUrls' => $pdfAssetUrls,
+        Pdf::setOptions([
+            'isRemoteEnabled' => true,
         ]);
+
+        $pdf = Pdf::loadView('invitations.pdf', [
+            'guest' => $guest,
+            'event' => $data['event'],
+            'invitationUrl' => $data['invitationUrl'],
+            'qrCodeDataUri' => $data['qrCodeDataUri'],
+            'backgroundImage' => $data['pdfAssets']['background'] ?? null,
+            'bouquetImage' => $data['pdfAssets']['bouquet'] ?? null,
+        ])->setPaper('a4', 'portrait');
+
+        $filename = $data['event']['pdf_filename'] ?? 'invitation.pdf';
+
+        return $pdf->download($filename);
     }
 
     public function confirm(Request $request, string $token): RedirectResponse|JsonResponse
@@ -137,6 +104,78 @@ class InvitationController extends Controller
         }
 
         return redirect()->route('invitations.show', $token)->with('preferences_status', $message);
+    }
+
+    protected function buildInvitationData(Guest $guest, bool $withBeverages = true): array
+    {
+        $invitationUrl = route('invitations.show', $guest->invitation_token);
+        $qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=380x380&data=' . urlencode($invitationUrl);
+        $qrCodeDataUri = null;
+        $downloadNotice = null;
+
+        try {
+            $response = Http::timeout(5)->withoutVerifying()->withHeaders([
+                'Accept' => 'image/png',
+            ])->get($qrCodeUrl);
+            if ($response->successful()) {
+                $qrCodeDataUri = 'data:image/png;base64,' . base64_encode($response->body());
+            }
+        } catch (\Throwable $exception) {
+            report($exception);
+            $downloadNotice = "Le QR code n'a pas pu être récupéré. Vérifiez votre connexion avant de télécharger.";
+        }
+
+        if (! $qrCodeDataUri) {
+            $qrCodeDataUri = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8+B8AAwMCAO4P8LkAAAAASUVORK5CYII=';
+            $downloadNotice = $downloadNotice ?? "Le téléchargement fonctionne avec un QR générique. Connectez-vous à Internet pour un QR personnalisé.";
+        }
+
+        $event = [
+            'page_title' => 'Mariage Raphael et Daniella',
+            'couple_names' => 'Raphael et Daniella',
+            'date_long' => 'Samedi 29 novembre 2025',
+            'ceremony_time' => '10h00',
+            'ceremony_title' => 'Bénédiction Nuptiale',
+            'ceremony_location' => "Église La Borne Cité verte\n12e rue\nRéf: ex Promedis ou N6",
+            'ceremony_map_query' => 'Église La Borne Cité Verte 12e Rue Kinshasa',
+            'reception_time' => '19h00',
+            'reception_title' => 'Soirée dansante',
+            'reception_location' => "Salle Malaïka\nC/ Ngaliema, route de Matadi, Q/ Météo\nRéf: Regideso",
+            'reception_map_query' => 'Salle Malaïka Ngaliema Kinshasa',
+            'dress_code' => 'All black',
+        ];
+        $event['pdf_filename'] = 'Invitation-' . Str::slug($event['couple_names'] ?? 'mariage', '-') . '.pdf';
+
+        $pdfAssets = [
+            'background' => $this->encodePublicAsset('invitations/fond.jpeg'),
+            'bouquet' => $this->encodePublicAsset('invitations/bouquet.png'),
+        ];
+        $pdfAssetUrls = [
+            'background' => asset('invitations/fond.jpeg'),
+            'bouquet' => asset('invitations/bouquet.png'),
+        ];
+
+        $beverages = collect();
+        $beverageMap = collect();
+
+        if ($withBeverages) {
+            $allBeverages = Beverage::orderBy('name')->get();
+            $beverages = $allBeverages->groupBy('category')->map(fn ($group) => $group->values());
+            $beverageMap = $allBeverages->keyBy('id')->map->name;
+        }
+
+        return [
+            'guest' => $guest,
+            'event' => $event,
+            'invitationUrl' => $invitationUrl,
+            'qrCodeUrl' => $qrCodeUrl,
+            'qrCodeDataUri' => $qrCodeDataUri,
+            'beverages' => $beverages,
+            'beverageMap' => $beverageMap,
+            'downloadNotice' => $downloadNotice,
+            'pdfAssets' => $pdfAssets,
+            'pdfAssetUrls' => $pdfAssetUrls,
+        ];
     }
 
     protected function storePreferences(Guest $guest, $beverageIds): void

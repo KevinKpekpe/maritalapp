@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('invitations/{token}', [InvitationController::class, 'show'])->name('invitations.show');
 Route::post('invitations/{token}/confirm', [InvitationController::class, 'confirm'])->name('invitations.confirm');
+Route::get('invitations/{token}/download', [InvitationController::class, 'download'])->name('invitations.download');
 Route::post('invitations/{token}/preferences', [InvitationController::class, 'updatePreferences'])->name('invitations.preferences');
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
