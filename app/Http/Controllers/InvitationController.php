@@ -63,6 +63,10 @@ class InvitationController extends Controller
             'background' => $this->encodePublicAsset('invitations/fond.jpeg'),
             'bouquet' => $this->encodePublicAsset('invitations/bouquet.png'),
         ];
+        $pdfAssetUrls = [
+            'background' => asset('invitations/fond.jpeg'),
+            'bouquet' => asset('invitations/bouquet.png'),
+        ];
 
         $allBeverages = Beverage::orderBy('name')->get();
         $beverages = $allBeverages->groupBy('category')->map(fn ($group) => $group->values());
@@ -78,6 +82,7 @@ class InvitationController extends Controller
             'beverageMap' => $beverageMap,
             'downloadNotice' => $downloadNotice,
             'pdfAssets' => $pdfAssets,
+            'pdfAssetUrls' => $pdfAssetUrls,
         ]);
     }
 
@@ -169,7 +174,9 @@ class InvitationController extends Controller
         }
 
         try {
-            $mimeType = mime_content_type($absolutePath) ?: 'image/png';
+            $mimeType = function_exists('mime_content_type')
+                ? (mime_content_type($absolutePath) ?: 'image/png')
+                : 'image/png';
             $contents = file_get_contents($absolutePath);
             if ($contents === false) {
                 return null;

@@ -1374,11 +1374,15 @@
     </script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            console.debug("[Invitation] Script de téléchargement initialisé");
             const downloadBtn = document.getElementById("download-invitation");
             const downloadMessage = document.getElementById("download-message");
             if (!downloadBtn) {
+                console.warn("[Invitation] Bouton de téléchargement introuvable dans le DOM");
                 return;
             }
+
+            console.debug("[Invitation] Bouton de téléchargement trouvé", downloadBtn);
 
             const showDownloadMessage = (text, type = 'info') => {
                 if (!downloadMessage) return;
@@ -1386,6 +1390,25 @@
                 downloadMessage.className = type === 'error'
                     ? 'text-sm text-red-200'
                     : 'text-sm text-white/90';
+            };
+
+            const toDataUrl = async (url) => {
+                const response = await fetch(url, { credentials: 'same-origin' });
+                if (!response.ok) {
+                    console.error("[Invitation][toDataUrl] Échec de chargement", url, response.status, response.statusText);
+                    throw new Error(`Impossible de charger ${url}`);
+                }
+
+                const blob = await response.blob();
+                return await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = (event) => {
+                        console.error("[Invitation][toDataUrl] Lecture blob échouée", url, event);
+                        reject(event);
+                    };
+                    reader.readAsDataURL(blob);
+                });
             };
 
             if (window.location.protocol === "file:") {
@@ -1396,34 +1419,6 @@
                 showDownloadMessage("Téléchargement indisponible en mode file://", 'error');
                 return;
             }
-
-            let assetsPromise;
-
-            if (!pdfAssets || !pdfAssets.background || !pdfAssets.bouquet) {
-                downloadBtn.disabled = true;
-                downloadBtn.classList.add("opacity-60", "cursor-not-allowed");
-                showDownloadMessage("Ressources manquantes pour générer le PDF. Contactez l'organisateur.", 'error');
-                return;
-            }
-
-            const loadAssets = () => {
-                if (!assetsPromise) {
-                    assetsPromise = Promise.resolve().then(() => {
-                        const fallbackQr = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8+B8AAwMCAO4P8LkAAAAASUVORK5CYII=';
-
-                        if (!pdfAssets?.background || !pdfAssets?.bouquet) {
-                            throw new Error("Ressources graphiques manquantes pour générer le PDF.");
-                        }
-
-                        return {
-                            background: pdfAssets.background,
-                            bouquet: pdfAssets.bouquet,
-                            qr: qrDataUri || fallbackQr,
-                        };
-                    });
-                }
-                return assetsPromise;
-            };
 
             const setBusy = (busy) => {
                 const labelEl = downloadBtn.querySelector(".download-label");
@@ -1462,142 +1457,173 @@
                 }
             };
 
-            const initialisePdfDownload = () => {
-                if (!window.jspdf || !window.jspdf.jsPDF || downloadBtn.dataset.pdfReady === "true") {
-                    return Boolean(downloadBtn.dataset.pdfReady === "true");
+            let assetsPromise;
+
+            const loadAssets = () => {
+                if (!assetsPromise) {
+                    console.debug("[Invitation] Chargement des assets du PDF...");
+                    assetsPromise = Promise.resolve().then(async () => {
+                        const fallbackQr = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8+B8AAwMCAO4P8LkAAAAASUVORK5CYII=';
+
+                        const background = pdfAssets?.background
+                            ?? (pdfAssetUrls?.background ? await toDataUrl(pdfAssetUrls.background) : null);
+                        const bouquet = pdfAssets?.bouquet
+                            ?? (pdfAssetUrls?.bouquet ? await toDataUrl(pdfAssetUrls.bouquet) : null);
+
+                        console.debug("[Invitation][loadAssets] Ressources chargées ?", {
+                            background: Boolean(background),
+                            bouquet: Boolean(bouquet),
+                            qr: Boolean(qrDataUri),
+                            viaDataUri: Boolean(pdfAssets?.background && pdfAssets?.bouquet),
+                            viaFetch: Boolean(!pdfAssets?.background && pdfAssetUrls?.background),
+                        });
+
+                        if (!background || !bouquet) {
+                            console.error("[Invitation][loadAssets] Ressources manquantes", { background, bouquet });
+                            throw new Error("Ressources graphiques manquantes pour générer le PDF.");
+                        }
+
+                        const payload = {
+                            background,
+                            bouquet,
+                            qr: qrDataUri || fallbackQr,
+                        };
+                        console.debug("[Invitation][loadAssets] Payload prêt", payload);
+                        return payload;
+                    });
+                }
+                return assetsPromise;
+            };
+
+            const ensureJsPdf = () => {
+                if (window.jspdf?.jsPDF) {
+                    console.debug("[Invitation] jsPDF déjà disponible");
+                    return Promise.resolve(window.jspdf.jsPDF);
                 }
 
-                downloadBtn.dataset.pdfReady = "true";
-                const { jsPDF } = window.jspdf;
+                if (ensureJsPdf.promise) {
+                    return ensureJsPdf.promise;
+                }
 
-                downloadBtn.addEventListener("click", async () => {
-                    setBusy(true);
-                    showDownloadMessage('');
-                    try {
-                        const assets = await loadAssets();
-                        const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-
-                        const pageWidth = doc.internal.pageSize.getWidth();
-                        const pageHeight = doc.internal.pageSize.getHeight();
-
-                        // --- Image de fond ---
-                        doc.addImage(assets.background, "JPEG", 0, 0, pageWidth, pageHeight, undefined, "FAST");
-
-                        // --- Bloc principal (fond ivoire clair, sans alpha) ---
-                        doc.setFillColor(255, 253, 249);
-                        doc.roundedRect(14, 20, pageWidth - 28, pageHeight - 40, 10, 10, "F");
-
-                        // --- Bande décorative dorée pâle ---
-                        doc.setFillColor(240, 205, 133);
-                        doc.roundedRect(20, 30, pageWidth - 40, 70, 14, 14, "F");
-
-                        // --- Images florales ---
-                        doc.addImage(assets.bouquet, "PNG", 24, 32, 45, 48, undefined, "FAST");
-                        doc.addImage(assets.bouquet, "PNG", pageWidth - 68, pageHeight - 92, 44, 47, undefined, "FAST");
-
-                        // --- Fonctions utilitaires pour centrer / aligner le texte ---
-                        const centerText = (text, y, size = 16, font = "times", style = "normal") => {
-                            doc.setFont(font, style);
-                            doc.setFontSize(size);
-                            doc.text(text, pageWidth / 2, y, { align: "center" });
-                        };
-
-                        const leftText = (text, x, y, size = 11, font = "helvetica", style = "normal") => {
-                            doc.setFont(font, style);
-                            doc.setFontSize(size);
-                            doc.text(text, x, y);
-                        };
-
-                        // --- Titres principaux ---
-                        doc.setTextColor(189, 137, 61);
-                        centerText("Save the Date", 46, 13, "helvetica", "bold");
-
-                        doc.setTextColor(204, 149, 69);
-                        centerText({{ json_encode($event['couple_names'] ?? 'Nos mariés') }}, 66, 30, "times", "italic");
-
-                        doc.setTextColor(71, 58, 48);
-                        centerText("Mariage — 29 novembre 2025", 82, 13, "helvetica", "normal");
-
-                        // --- Ligne décorative ---
-                        doc.setDrawColor(214, 170, 95);
-                        doc.setLineWidth(0.3);
-                        doc.line(50, 90, pageWidth - 50, 90);
-
-                        // --- Programme ---
-                        doc.setTextColor(186, 132, 58);
-                        centerText("Programme de la journée", 106, 12, "helvetica", "bold");
-
-                        doc.setTextColor(204, 149, 69);
-                        leftText("10h00", 32, 124, 13, "helvetica", "bold");
-
-                        doc.setTextColor(71, 58, 48);
-                        leftText("Bénédiction Nuptiale", 32, 134, 12, "times", "italic");
-                        leftText("Église La Borne Cité verte", 32, 146);
-                        leftText("12e rue", 32, 155, 10);
-                        leftText("Réf: ex Promedis ou N6", 32, 164, 10);
-
-                        doc.setTextColor(204, 149, 69);
-                        leftText("19h00", pageWidth / 2 + 6, 124, 13, "helvetica", "bold");
-
-                        doc.setTextColor(71, 58, 48);
-                        leftText("Soirée Dansante", pageWidth / 2 + 6, 134, 12, "times", "italic");
-
-                        leftText("Salle Malaïka", pageWidth / 2 + 6, 146);
-                        leftText("C/ Ngaliema, route de Matadi, Q/ Météo", pageWidth / 2 + 6, 155, 10);
-                        leftText("Réf: Regideso", pageWidth / 2 + 6, 164, 10);
-
-                        // --- Texte de conclusion ---
-                        doc.setTextColor(94, 75, 61);
-                        centerText("Nous avons hâte de célébrer ce moment", 181, 10.5, "helvetica", "normal");
-                        centerText("à vos côtés. Merci de confirmer votre présence.", 189, 10.5, "helvetica", "normal");
-
-                        // --- QR Code et encadrement doré ---
-                        const qrSize = 46;
-                        const qrX = pageWidth / 2 - qrSize / 2;
-                        const qrY = 198;
-                        doc.setDrawColor(243, 195, 74);
-                        doc.setLineWidth(0.6);
-                        doc.roundedRect(qrX - 7, qrY - 7, qrSize + 14, qrSize + 14, 8, 8, "S");
-                        doc.addImage(assets.qr, "PNG", qrX, qrY, qrSize, qrSize, undefined, "FAST");
-
-                        // --- Infos additionnelles ---
-                        doc.setFont("helvetica", "italic");
-                        doc.setFontSize(9.5);
-                        doc.setTextColor(102, 78, 62);
-                        doc.text("RSVP : {{ $invitationUrl }}", pageWidth / 2, qrY + qrSize + 16, { align: "center" });
-                        doc.text("Dress code : {{ $event['dress_code'] ?? 'Chic et Élégant' }}", pageWidth / 2, qrY + qrSize + 23.5, { align: "center" });
-
-                        // --- Sauvegarde ---
-                        doc.save({{ json_encode($event['pdf_filename'] ?? 'invitation.pdf') }});
-                        showDownloadMessage('Invitation téléchargée !');
-                    }
-                    catch (error) {
-                        console.error(error);
-                        showDownloadMessage("Impossible de générer le PDF pour le moment. Veuillez réessayer.", 'error');
-                    } finally {
-                        setBusy(false);
-                    }
+                console.warn("[Invitation] jsPDF absent, tentative de chargement dynamique...");
+                ensureJsPdf.promise = new Promise((resolve, reject) => {
+                    const script = document.createElement("script");
+                    script.src = "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
+                    script.async = true;
+                    script.onload = () => {
+                        if (window.jspdf?.jsPDF) {
+                            console.debug("[Invitation] jsPDF chargé via fallback");
+                            resolve(window.jspdf.jsPDF);
+                        } else {
+                            reject(new Error("jsPDF introuvable après chargement dynamique"));
+                        }
+                    };
+                    script.onerror = (event) => reject(new Error("Échec de chargement de jsPDF depuis CDN"));
+                    document.head.appendChild(script);
                 });
 
-                return true;
+                return ensureJsPdf.promise;
             };
 
-            const waitForJsPdf = (attempt = 0) => {
-                if (initialisePdfDownload()) {
-                    return;
-                }
-                if (attempt >= 60) {
-                    console.error("jsPDF n'a pas pu être chargé.");
-                    showDownloadMessage("Le générateur PDF n'a pas pu se charger. Rechargez la page et vérifiez votre connexion.", 'error');
-                    downloadBtn.addEventListener("click", () => {
-                        alert("Le générateur PDF ne s'est pas chargé correctement. Vérifiez votre connexion puis actualisez la page.");
-                    }, { once: true });
-                    return;
-                }
-                setTimeout(() => waitForJsPdf(attempt + 1), 100);
-            };
+            downloadBtn.addEventListener("click", async () => {
+                console.info("[Invitation] Clic sur téléchargement");
+                setBusy(true);
+                showDownloadMessage('');
+                try {
+                    const [jsPDF, assets] = await Promise.all([ensureJsPdf(), loadAssets()]);
+                    console.debug("[Invitation] jsPDF et assets prêts, génération du PDF", assets);
+                    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-            waitForJsPdf();
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const pageHeight = doc.internal.pageSize.getHeight();
+
+                    doc.addImage(assets.background, "JPEG", 0, 0, pageWidth, pageHeight, undefined, "FAST");
+
+                    doc.setFillColor(255, 253, 249);
+                    doc.roundedRect(14, 20, pageWidth - 28, pageHeight - 40, 10, 10, "F");
+
+                    doc.setFillColor(240, 205, 133);
+                    doc.roundedRect(20, 30, pageWidth - 40, 70, 14, 14, "F");
+
+                    doc.addImage(assets.bouquet, "PNG", 24, 32, 45, 48, undefined, "FAST");
+                    doc.addImage(assets.bouquet, "PNG", pageWidth - 68, pageHeight - 92, 44, 47, undefined, "FAST");
+
+                    const centerText = (text, y, size = 16, font = "times", style = "normal") => {
+                        doc.setFont(font, style);
+                        doc.setFontSize(size);
+                        doc.text(text, pageWidth / 2, y, { align: "center" });
+                    };
+
+                    const leftText = (text, x, y, size = 11, font = "helvetica", style = "normal") => {
+                        doc.setFont(font, style);
+                        doc.setFontSize(size);
+                        doc.text(text, x, y);
+                    };
+
+                    doc.setTextColor(189, 137, 61);
+                    centerText("Save the Date", 46, 13, "helvetica", "bold");
+
+                    doc.setTextColor(204, 149, 69);
+                    centerText({{ json_encode($event['couple_names'] ?? 'Nos mariés') }}, 66, 30, "times", "italic");
+
+                    doc.setTextColor(71, 58, 48);
+                    centerText("Mariage — 29 novembre 2025", 82, 13, "helvetica", "normal");
+
+                    doc.setDrawColor(214, 170, 95);
+                    doc.setLineWidth(0.3);
+                    doc.line(50, 90, pageWidth - 50, 90);
+
+                    doc.setTextColor(186, 132, 58);
+                    centerText("Programme de la journée", 106, 12, "helvetica", "bold");
+
+                    doc.setTextColor(204, 149, 69);
+                    leftText("10h00", 32, 124, 13, "helvetica", "bold");
+
+                    doc.setTextColor(71, 58, 48);
+                    leftText("Bénédiction Nuptiale", 32, 134, 12, "times", "italic");
+                    leftText("Église La Borne Cité verte", 32, 146);
+                    leftText("12e rue", 32, 155, 10);
+                    leftText("Réf: ex Promedis ou N6", 32, 164, 10);
+
+                    doc.setTextColor(204, 149, 69);
+                    leftText("19h00", pageWidth / 2 + 6, 124, 13, "helvetica", "bold");
+
+                    doc.setTextColor(71, 58, 48);
+                    leftText("Soirée Dansante", pageWidth / 2 + 6, 134, 12, "times", "italic");
+
+                    leftText("Salle Malaïka", pageWidth / 2 + 6, 146);
+                    leftText("C/ Ngaliema, route de Matadi, Q/ Météo", pageWidth / 2 + 6, 155, 10);
+                    leftText("Réf: Regideso", pageWidth / 2 + 6, 164, 10);
+
+                    doc.setTextColor(94, 75, 61);
+                    centerText("Nous avons hâte de célébrer ce moment", 181, 10.5, "helvetica", "normal");
+                    centerText("à vos côtés. Merci de confirmer votre présence.", 189, 10.5, "helvetica", "normal");
+
+                    const qrSize = 46;
+                    const qrX = pageWidth / 2 - qrSize / 2;
+                    const qrY = 198;
+                    doc.setDrawColor(243, 195, 74);
+                    doc.setLineWidth(0.6);
+                    doc.roundedRect(qrX - 7, qrY - 7, qrSize + 14, qrSize + 14, 8, 8, "S");
+                    doc.addImage(assets.qr, "PNG", qrX, qrY, qrSize, qrSize, undefined, "FAST");
+
+                    doc.setFont("helvetica", "italic");
+                    doc.setFontSize(9.5);
+                    doc.setTextColor(102, 78, 62);
+                    doc.text("RSVP : {{ $invitationUrl }}", pageWidth / 2, qrY + qrSize + 16, { align: "center" });
+                    doc.text("Dress code : {{ $event['dress_code'] ?? 'Chic et Élégant' }}", pageWidth / 2, qrY + qrSize + 23.5, { align: "center" });
+
+                    doc.save({{ json_encode($event['pdf_filename'] ?? 'invitation.pdf') }});
+                    console.info("[Invitation] PDF enregistré");
+                    showDownloadMessage('Invitation téléchargée !');
+                }
+                catch (error) {
+                    console.error("[Invitation] Erreur pendant la génération du PDF", error);
+                    showDownloadMessage("Impossible de générer le PDF pour le moment. Veuillez réessayer.", 'error');
+                } finally {
+                    setBusy(false);
+                }
+            });
         });
     </script>
 </body>
