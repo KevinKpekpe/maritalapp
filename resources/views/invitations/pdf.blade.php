@@ -254,14 +254,14 @@
                 <p class="salutation">
                     Cher·e <span class="guest-name">{{ $guest->display_name }}</span>,<br>
                     C’est avec une immense joie que nous vous invitons à témoigner de nos vœux sacrés
-                    <span class="sparkle">💍</span> et à partager une soirée scintillante
-                    <span class="sparkle">✨</span>. Votre présence chérira notre histoire et illuminera cette journée.
+                    et à partager une soirée scintillante.
+                    Votre présence chérira notre histoire et illuminera cette journée.
                 </p>
                 <div class="details-grid">
                     @if ($guest->table)
                         <div class="details-row">
                             <div class="details-label">Table</div>
-                            <div class="details-value">{{ $guest->table->name }}</div>
+                            <div class="details-value"> <span class="dress-code">{{ $guest->table->name }}</span> </div>
                         </div>
                     @endif
                     <div class="details-row">
@@ -301,12 +301,7 @@
                 @if (!empty($qrCodeDataUri))
                     <img src="{{ $qrCodeDataUri }}" alt="QR code de confirmation">
                 @endif
-                <p class="qr-caption">
-                    Confirmez votre présence via le QR code<br>
-                    ou sur&nbsp;: {{ $invitationUrl }}
-                </p>
             </div>
-
             <div class="footer">
                 Avec toute notre affection — Raphael &amp; Daniella
             </div>
