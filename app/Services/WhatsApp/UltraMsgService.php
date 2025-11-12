@@ -69,8 +69,12 @@ class UltraMsgService
     {
         return implode("\n", [
             "🎉 Bonjour {$guestName} !",
+            "",
             "Nous avons le plaisir de vous inviter au mariage de Raphael & Daniella.",
-            "Confirmez votre présence et retrouvez tous les détails ici : {$invitationUrl}",
+            "",
+            "👇 Cliquez sur le lien ci-dessous pour confirmer votre présence et retrouver tous les détails :",
+            "🔗 {$invitationUrl}",
+            "",
             "Dress code : All black 🖤",
         ]);
     }
