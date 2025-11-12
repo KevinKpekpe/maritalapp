@@ -1328,6 +1328,28 @@
             const mainContent = document.querySelector("main");
             let hasOpened = false;
 
+            // Arrêter la musique quand l'utilisateur quitte la page
+            const stopAudio = () => {
+                const audioEl = document.getElementById("invitation-audio");
+                if (audioEl && !audioEl.paused) {
+                    audioEl.pause();
+                    audioEl.currentTime = 0;
+                }
+            };
+
+            // Gestionnaire pour quand l'utilisateur quitte la page/ferme l'onglet
+            window.addEventListener('beforeunload', stopAudio);
+
+            // Gestionnaire pour quand l'utilisateur change d'onglet ou minimise la fenêtre
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    stopAudio();
+                }
+            });
+
+            // Gestionnaire pour quand la page perd le focus
+            window.addEventListener('blur', stopAudio);
+
             const openInvitation = () => {
                 if (hasOpened || !overlay || !envelope || !mainContent) return;
                 hasOpened = true;
