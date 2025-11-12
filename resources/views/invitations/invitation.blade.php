@@ -487,6 +487,21 @@
             display: inline-flex;
         }
 
+        @keyframes slide-down {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .animate-slide-down {
+            animation: slide-down 0.4s ease-out;
+        }
+
         @keyframes spin {
             to {
                 transform: rotate(360deg);
@@ -837,6 +852,23 @@
         ->implode(' & ');
 @endphp
 <body class="overflow-x-hidden no-scroll">
+    @if (session('status') || session('preferences_status'))
+        <div id="success-alert" class="fixed top-0 left-0 right-0 z-50 flex justify-center items-center p-4 animate-slide-down">
+            <div class="bg-green-500 text-white px-6 py-4 rounded-lg shadow-2xl max-w-md w-full flex items-center gap-3 border-2 border-green-400">
+                <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <div class="flex-1">
+                    <p class="font-semibold">{{ session('status') ?? session('preferences_status') }}</p>
+                </div>
+                <button onclick="document.getElementById('success-alert').remove()" class="text-white hover:text-green-100 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    @endif
     <div class="snow-layer" aria-hidden="true"></div>
     <div id="reveal-overlay" class="reveal-overlay" tabindex="0">
         <img src="{{ asset('invitations/bouquet.png') }}" alt="Décoration bouquet" class="overlay-decor overlay-decor--left">
@@ -1272,6 +1304,25 @@
     </script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            // Gestion de l'alerte de succès
+            const successAlert = document.getElementById('success-alert');
+            if (successAlert) {
+                // Scroll vers l'alerte
+                setTimeout(() => {
+                    successAlert.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+
+                // Fermeture automatique après 5 secondes
+                setTimeout(() => {
+                    successAlert.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
+                    successAlert.style.opacity = '0';
+                    successAlert.style.transform = 'translateY(-100%)';
+                    setTimeout(() => {
+                        successAlert.remove();
+                    }, 300);
+                }, 5000);
+            }
+
             const overlay = document.getElementById("reveal-overlay");
             const envelope = document.getElementById("envelope");
             const mainContent = document.querySelector("main");
