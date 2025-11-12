@@ -6,6 +6,7 @@ use App\Http\Controllers\GuestController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\PreferenceController;
 use App\Http\Controllers\TableController;
+use App\Http\Controllers\UserController;
 use App\Models\Guest;
 use App\Models\ReceptionTable;
 use Illuminate\Support\Facades\Route;
@@ -28,6 +29,41 @@ Route::middleware('auth.session')->group(function () {
         })->count();
         $tableCount = ReceptionTable::count();
 
+        // Données pour le graphique hebdomadaire (7 derniers jours)
+        $weeklyData = [];
+        $weeklyLabels = [];
+        $startOfWeek = now()->subDays(6)->startOfDay();
+
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $dayStart = $date->copy()->startOfDay();
+            $dayEnd = $date->copy()->endOfDay();
+
+            $count = Guest::where('rsvp_status', 'confirmed')
+                ->whereBetween('rsvp_confirmed_at', [$dayStart, $dayEnd])
+                ->count();
+
+            $weeklyData[] = $count;
+            $weeklyLabels[] = $date->format('D');
+        }
+
+        // Données pour le graphique mensuel (12 derniers mois)
+        $monthlyData = [];
+        $monthlyLabels = [];
+
+        for ($i = 11; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $monthStart = $date->copy()->startOfMonth();
+            $monthEnd = $date->copy()->endOfMonth();
+
+            $count = Guest::where('rsvp_status', 'confirmed')
+                ->whereBetween('rsvp_confirmed_at', [$monthStart, $monthEnd])
+                ->count();
+
+            $monthlyData[] = $count;
+            $monthlyLabels[] = $date->format('M');
+        }
+
         $breadcrumbs = [
             ['label' => 'Dashboard', 'url' => url('/')],
         ];
@@ -38,6 +74,16 @@ Route::middleware('auth.session')->group(function () {
                 'guests_confirmed' => $confirmedGuests,
                 'guests_pending' => $pendingGuests,
                 'tables_total' => $tableCount,
+            ],
+            'chartData' => [
+                'weekly' => [
+                    'data' => $weeklyData,
+                    'labels' => $weeklyLabels,
+                ],
+                'monthly' => [
+                    'data' => $monthlyData,
+                    'labels' => $monthlyLabels,
+                ],
             ],
             'breadcrumbs' => $breadcrumbs,
         ])->with('pageTitle', 'Dashboard');
@@ -57,6 +103,10 @@ Route::middleware('auth.session')->group(function () {
 
     Route::get('beverages/search', [BeverageController::class, 'search'])->name('beverages.search');
     Route::resource('beverages', BeverageController::class)->except(['show']);
+
+    Route::get('users/search', [UserController::class, 'search'])->name('users.search');
+    Route::resource('users', UserController::class)->except(['show']);
+    Route::post('users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
 
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 });

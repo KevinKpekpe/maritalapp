@@ -82,6 +82,13 @@
                             <span class="pc-mtext">Boissons</span>
                         </a>
                     </li>
+                    <!-- Gestion des utilisateurs -->
+                    <li class="pc-item">
+                        <a href="{{ route('users.index') }}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-user"></i></span>
+                            <span class="pc-mtext">Utilisateurs</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>

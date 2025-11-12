@@ -18,6 +18,7 @@
 
 <!-- [Page Specific JS] start -->
 <script src="{{ asset('assets/js/plugins/apexcharts.min.js') }}"></script>
+@stack('scripts')
 <script src="{{ asset('assets/js/pages/dashboard-default.js') }}"></script>
 <!-- [Page Specific JS] end -->
 
@@ -48,8 +49,6 @@
 <script>
     font_change("Public-Sans");
 </script>
-
-@stack('scripts')
 
 </body>
 <!-- [Body] end -->

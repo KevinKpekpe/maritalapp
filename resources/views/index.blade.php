@@ -21,6 +21,11 @@
             'guests_confirmed' => 0,
             'tables_total' => 0,
         ], $stats ?? []);
+
+        $chartData = $chartData ?? [
+            'weekly' => ['data' => [], 'labels' => []],
+            'monthly' => ['data' => [], 'labels' => []],
+        ];
     @endphp
     <div class="col-md-6 col-xl-3">
         <div class="card">
@@ -91,5 +96,21 @@
     </div>
 </div>
 </div>
+
+@push('scripts')
+<script>
+    // Passer les données du graphique au JavaScript
+    window.chartData = {
+        weekly: {
+            data: @json($chartData['weekly']['data'] ?? []),
+            labels: @json($chartData['weekly']['labels'] ?? [])
+        },
+        monthly: {
+            data: @json($chartData['monthly']['data'] ?? []),
+            labels: @json($chartData['monthly']['labels'] ?? [])
+        }
+    };
+</script>
+@endpush
 
 @endsection
