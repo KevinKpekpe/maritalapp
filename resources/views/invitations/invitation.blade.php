@@ -831,6 +831,7 @@
         ->filter()
         ->values();
     $coupleInitials = collect(preg_split('/\s+/', $event['couple_names'] ?? '', -1, PREG_SPLIT_NO_EMPTY))
+        ->reject(fn ($part) => in_array(mb_strtolower($part), ['et', 'and', '&', 'y', 'e']))
         ->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))
         ->take(2)
         ->implode(' & ');

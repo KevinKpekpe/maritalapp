@@ -11,12 +11,6 @@
                 <a href="{{ url('/tables') }}" class="btn btn-light-warning">
                     <i class="ti ti-table me-2"></i> Tables
                 </a>
-                <a href="{{ url('/invitations') }}" class="btn btn-light-success">
-                    <i class="ti ti-mail me-2"></i> Invitations
-                </a>
-                <a href="{{ url('/tasks') }}" class="btn btn-light-secondary">
-                    <i class="ti ti-checklist me-2"></i> Tâches
-                </a>
             </div>
         </div>
     </div>

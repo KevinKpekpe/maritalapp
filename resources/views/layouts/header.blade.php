@@ -3,13 +3,13 @@
 <!-- [Head] start -->
 
 <head>
-    <title>Home | APP MPOX KINOISE</title>
+    <title>Home | MaritalApp</title>
     <!-- [Meta] -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description" content="Application de gestion MPOX KINOISE">
-    <meta name="keywords" content="MPOX, KINOISE, Santé, Laboratoire">
+    <meta name="description" content="Application de gestion MaritalApp">
+    <meta name="keywords" content="MaritalApp, Mariage, Gestion, Invités">
     <meta name="author" content="Votre Organisation">
 
     <!-- [Favicon] -->
@@ -71,7 +71,7 @@
                     <!-- Préférences -->
                     <li class="pc-item">
                         <a href="{{ route('preferences.index') }}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-cocktail"></i></span>
+                            <span class="pc-micon"><i class="ti ti-list-check"></i></span>
                             <span class="pc-mtext">Préférences</span>
                         </a>
                     </li>
@@ -80,13 +80,6 @@
                         <a href="{{ route('beverages.index') }}" class="pc-link">
                             <span class="pc-micon"><i class="ti ti-bottle"></i></span>
                             <span class="pc-mtext">Boissons</span>
-                        </a>
-                    </li>
-                    <!-- Invitations -->
-                    <li class="pc-item">
-                        <a href="{{ url('/invitations') }}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-mail"></i></span>
-                            <span class="pc-mtext">Invitations</span>
                         </a>
                     </li>
                 </ul>

@@ -3,7 +3,7 @@
     <div class="footer-wrapper container-fluid">
         <div class="row">
             <div class="col-sm my-1">
-                <p class="m-0">MPOX Dashboard &#9829; crafted by SpectreCoding 💻👻. All rights reserved.</p>
+                <p class="m-0">MaritalApp Dashboard &#9829; crafted by SpectreCoding 💻👻. All rights reserved.</p>
             </div>
             <div class="col-auto my-1">
                 <ul class="list-inline footer-link mb-0">
