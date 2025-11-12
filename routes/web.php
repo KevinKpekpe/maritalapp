@@ -39,6 +39,7 @@ Route::middleware('auth.session')->group(function () {
     });
 
     Route::get('guests/search', [GuestController::class, 'search'])->name('guests.search');
+    Route::post('guests/{guest}/send-invitation', [GuestController::class, 'sendInvitation'])->name('guests.send_invitation');
     Route::resource('guests', GuestController::class)->except(['show']);
     Route::post('guests/{id}/restore', [GuestController::class, 'restore'])->name('guests.restore');
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Guest;
 use App\Models\ReceptionTable;
+use App\Services\WhatsApp\UltraMsgService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -104,6 +105,23 @@ class GuestController extends Controller
         $guest->restore();
 
         return redirect()->route('guests.index')->with('status', 'Invité restauré.');
+    }
+
+    public function sendInvitation(Request $request, Guest $guest, UltraMsgService $whatsAppService): RedirectResponse
+    {
+        try {
+            $whatsAppService->sendInvitation($guest);
+
+            return redirect()
+                ->route('guests.index')
+                ->with('status', 'Invitation WhatsApp envoyée.');
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return redirect()
+                ->route('guests.index')
+                ->with('error', "Envoi WhatsApp impossible : {$exception->getMessage()}");
+        }
     }
 
     protected function validateData(Request $request): array

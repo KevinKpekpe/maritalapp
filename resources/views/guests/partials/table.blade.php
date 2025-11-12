@@ -83,6 +83,12 @@
                                     </button>
                                 </form>
                             @else
+                                <form action="{{ route('guests.send_invitation', $guest) }}" method="POST" class="d-inline me-2">
+                                    @csrf
+                                    <button type="submit" class="btn btn-outline-primary btn-sm" title="Envoyer l'invitation WhatsApp">
+                                        <i class="ti ti-brand-whatsapp me-1"></i> Envoyer
+                                    </button>
+                                </form>
                                 <a href="{{ route('guests.edit', $guest) }}" class="btn btn-outline-warning btn-sm me-2" title="Modifier">
                                     <i class="ti ti-edit me-1"></i> Modifier
                                 </a>

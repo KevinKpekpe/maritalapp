@@ -27,6 +27,11 @@
                         {{ session('status') }}
                     </div>
                 @endif
+                @if (session('error'))
+                    <div class="alert alert-danger" role="alert">
+                        {{ session('error') }}
+                    </div>
+                @endif
 
                 <div id="guest-table-container">
                     @include('guests.partials.table', ['guests' => $guests])
