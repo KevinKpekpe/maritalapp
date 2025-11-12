@@ -15,7 +15,12 @@ class BeverageController extends Controller
     {
         $beverages = Beverage::orderBy('name')->get();
 
-        return view('beverages.index', compact('beverages'));
+        $breadcrumbs = [
+            ['label' => 'Accueil', 'url' => url('/')],
+            ['label' => 'Boissons', 'url' => route('beverages.index')],
+        ];
+
+        return view('beverages.index', compact('beverages', 'breadcrumbs'))->with('pageTitle', 'Boissons');
     }
 
     public function search(Request $request): JsonResponse
@@ -43,7 +48,16 @@ class BeverageController extends Controller
 
     public function create(): View
     {
-        return view('beverages.form', ['beverage' => new Beverage()]);
+        $breadcrumbs = [
+            ['label' => 'Accueil', 'url' => url('/')],
+            ['label' => 'Boissons', 'url' => route('beverages.index')],
+            ['label' => 'Ajouter une boisson', 'url' => route('beverages.create')],
+        ];
+
+        return view('beverages.form', [
+            'beverage' => new Beverage(),
+            'breadcrumbs' => $breadcrumbs,
+        ])->with('pageTitle', 'Ajouter une boisson');
     }
 
     public function store(Request $request): RedirectResponse
@@ -57,7 +71,13 @@ class BeverageController extends Controller
 
     public function edit(Beverage $beverage): View
     {
-        return view('beverages.form', compact('beverage'));
+        $breadcrumbs = [
+            ['label' => 'Accueil', 'url' => url('/')],
+            ['label' => 'Boissons', 'url' => route('beverages.index')],
+            ['label' => 'Modifier une boisson', 'url' => route('beverages.edit', $beverage)],
+        ];
+
+        return view('beverages.form', compact('beverage', 'breadcrumbs'))->with('pageTitle', 'Modifier une boisson');
     }
 
     public function update(Request $request, Beverage $beverage): RedirectResponse

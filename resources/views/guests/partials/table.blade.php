@@ -18,6 +18,7 @@
                     <th>Email</th>
                     <th>Statut RSVP</th>
                     <th>Invitation</th>
+                    <th>WhatsApp</th>
                     <th>Créé le</th>
                     <th>Archivé le</th>
                     <th class="text-end">Actions</th>
@@ -70,6 +71,20 @@
                                 </a>
                             @else
                                 <span class="text-muted">Non générée</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if ($guest->whatsapp_sent_at)
+                                <span class="badge bg-light-success border border-success text-success">
+                                    <i class="ti ti-check me-1"></i> Envoyé
+                                    <span class="d-block small fw-normal text-success mt-1">
+                                        {{ $guest->whatsapp_sent_at->format('d/m/Y H\hi') }}
+                                    </span>
+                                </span>
+                            @else
+                                <span class="badge bg-light-secondary border border-secondary text-secondary">
+                                    <i class="ti ti-x me-1"></i> Non envoyé
+                                </span>
                             @endif
                         </td>
                         <td>{{ $guest->created_at?->format('d/m/Y') }}</td>

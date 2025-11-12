@@ -28,6 +28,10 @@ Route::middleware('auth.session')->group(function () {
         })->count();
         $tableCount = ReceptionTable::count();
 
+        $breadcrumbs = [
+            ['label' => 'Dashboard', 'url' => url('/')],
+        ];
+
         return view('index', [
             'stats' => [
                 'guests_total' => $totalGuests,
@@ -35,7 +39,8 @@ Route::middleware('auth.session')->group(function () {
                 'guests_pending' => $pendingGuests,
                 'tables_total' => $tableCount,
             ],
-        ]);
+            'breadcrumbs' => $breadcrumbs,
+        ])->with('pageTitle', 'Dashboard');
     });
 
     Route::get('guests/search', [GuestController::class, 'search'])->name('guests.search');

@@ -20,7 +20,12 @@ class GuestController extends Controller
             ->orderBy('primary_first_name')
             ->get();
 
-        return view('guests.index', compact('guests'));
+        $breadcrumbs = [
+            ['label' => 'Accueil', 'url' => url('/')],
+            ['label' => 'Invités', 'url' => route('guests.index')],
+        ];
+
+        return view('guests.index', compact('guests', 'breadcrumbs'))->with('pageTitle', 'Invités');
     }
 
     public function search(Request $request): JsonResponse
@@ -54,10 +59,17 @@ class GuestController extends Controller
 
     public function create(): View
     {
+        $breadcrumbs = [
+            ['label' => 'Accueil', 'url' => url('/')],
+            ['label' => 'Invités', 'url' => route('guests.index')],
+            ['label' => 'Ajouter un invité', 'url' => route('guests.create')],
+        ];
+
         return view('guests.form', [
             'guest' => new Guest(),
             'tables' => $this->availableTables(),
-        ]);
+            'breadcrumbs' => $breadcrumbs,
+        ])->with('pageTitle', 'Ajouter un invité');
     }
 
     public function store(Request $request): RedirectResponse
@@ -73,10 +85,17 @@ class GuestController extends Controller
 
     public function edit(Guest $guest): View
     {
+        $breadcrumbs = [
+            ['label' => 'Accueil', 'url' => url('/')],
+            ['label' => 'Invités', 'url' => route('guests.index')],
+            ['label' => 'Modifier un invité', 'url' => route('guests.edit', $guest)],
+        ];
+
         return view('guests.form', [
             'guest' => $guest,
             'tables' => $this->availableTables($guest->reception_table_id),
-        ]);
+            'breadcrumbs' => $breadcrumbs,
+        ])->with('pageTitle', 'Modifier un invité');
     }
 
     public function update(Request $request, Guest $guest): RedirectResponse
@@ -110,17 +129,33 @@ class GuestController extends Controller
     public function sendInvitation(Request $request, Guest $guest, UltraMsgService $whatsAppService): RedirectResponse
     {
         try {
-            $whatsAppService->sendInvitation($guest);
+            $result = $whatsAppService->sendInvitation($guest);
+
+            if ($result['sent']) {
+                return redirect()
+                    ->route('guests.index')
+                    ->with('status', 'Invitation WhatsApp envoyée avec succès à '.$guest->display_name.'.');
+            } else {
+                $errorMessage = $result['response']['error'] ?? 'Erreur inconnue lors de l\'envoi de l\'invitation WhatsApp.';
+
+                return redirect()
+                    ->route('guests.index')
+                    ->with('error', 'Échec de l\'envoi de l\'invitation WhatsApp à '.$guest->display_name.': '.$errorMessage);
+            }
+        } catch (\InvalidArgumentException $e) {
+            return redirect()
+                ->route('guests.index')
+                ->with('error', 'Échec de l\'envoi: '.$e->getMessage());
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('guests.index')
+                ->with('error', 'Configuration UltraMsg manquante: '.$e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
 
             return redirect()
                 ->route('guests.index')
-                ->with('status', 'Invitation WhatsApp envoyée.');
-        } catch (\Throwable $exception) {
-            report($exception);
-
-            return redirect()
-                ->route('guests.index')
-                ->with('error', "Envoi WhatsApp impossible : {$exception->getMessage()}");
+                ->with('error', 'Une erreur inattendue est survenue lors de l\'envoi de l\'invitation WhatsApp.');
         }
     }
 

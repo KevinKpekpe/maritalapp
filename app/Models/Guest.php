@@ -21,11 +21,13 @@ class Guest extends Model
         'invitation_token',
         'rsvp_status',
         'rsvp_confirmed_at',
+        'whatsapp_sent_at',
     ];
 
     protected $casts = [
         'deleted_at' => 'datetime',
         'rsvp_confirmed_at' => 'datetime',
+        'whatsapp_sent_at' => 'datetime',
     ];
 
     public function table()

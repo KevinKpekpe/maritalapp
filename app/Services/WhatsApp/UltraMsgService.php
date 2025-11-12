@@ -44,14 +44,23 @@ class UltraMsgService
 
         $response = $this->getClient()->sendChatMessage($phone, $message);
 
+        $sent = ! empty($response['sent']) || ! empty($response['id']);
+
+        if ($sent) {
+            $guest->forceFill([
+                'whatsapp_sent_at' => now(),
+            ])->save();
+        }
+
         Log::info('Invitation WhatsApp envoyée', [
             'guest_id' => $guest->id,
             'phone' => $phone,
+            'sent' => $sent,
             'response' => $response,
         ]);
 
         return [
-            'sent' => ! empty($response['sent']) || ! empty($response['id']),
+            'sent' => $sent,
             'response' => $response,
         ];
     }

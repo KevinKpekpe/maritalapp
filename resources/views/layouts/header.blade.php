@@ -89,55 +89,6 @@
                             <span class="pc-mtext">Invitations</span>
                         </a>
                     </li>
-                    <!-- Planning du jour J -->
-                    <li class="pc-item">
-                        <a href="{{ url('/planning') }}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-calendar-event"></i></span>
-                            <span class="pc-mtext">Planning</span>
-                        </a>
-                    </li>
-                    <!-- Budget -->
-                    <li class="pc-item">
-                        <a href="{{ url('/budget') }}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-coin"></i></span>
-                            <span class="pc-mtext">Budget</span>
-                        </a>
-                    </li>
-                    <!-- Prestataires -->
-                    <li class="pc-item">
-                        <a href="{{ url('/providers') }}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-briefcase"></i></span>
-                            <span class="pc-mtext">Prestataires</span>
-                        </a>
-                    </li>
-                    <!-- Compte utilisateur -->
-                    <li class="pc-item pc-caption">
-                        <label>Account</label>
-                        <i class="ti ti-user-circle"></i>
-                    </li>
-                    <li class="pc-item">
-                        <a href="{{ url('/profile') }}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-user"></i></span>
-                            <span class="pc-mtext">Profile</span>
-                        </a>
-                    </li>
-                    <li class="pc-item">
-                        <a href="{{ url('/logout') }}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-lock"></i></span>
-                            <span class="pc-mtext">Logout</span>
-                        </a>
-                    </li>
-                    <!-- Admin Only -->
-                    <li class="pc-item pc-caption">
-                        <label>Admin</label>
-                        <i class="ti ti-settings"></i>
-                    </li>
-                    <li class="pc-item">
-                        <a href="{{ url('/admin/users') }}" class="pc-link">
-                            <span class="pc-micon"><i class="ti ti-users"></i></span>
-                            <span class="pc-mtext">Manage Users</span>
-                        </a>
-                    </li>
                 </ul>
             </div>
         </div>
@@ -324,12 +275,23 @@
                     <div class="row align-items-center">
                         <div class="col-md-12">
                             <div class="page-header-title">
-                                <h5 class="m-b-10">Home</h5>
+                                <h5 class="m-b-10">{{ $pageTitle ?? 'Dashboard' }}</h5>
                             </div>
                             <ul class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="./index.html">Home</a></li>
-                                <li class="breadcrumb-item"><a href="javascript: void(0)">Dashboard</a></li>
-                                <li class="breadcrumb-item" aria-current="page">Home</li>
+                                @if(isset($breadcrumbs) && is_array($breadcrumbs) && count($breadcrumbs) > 0)
+                                    @foreach($breadcrumbs as $index => $breadcrumb)
+                                        @if($index === count($breadcrumbs) - 1)
+                                            <li class="breadcrumb-item" aria-current="page">{{ $breadcrumb['label'] }}</li>
+                                        @else
+                                            <li class="breadcrumb-item">
+                                                <a href="{{ $breadcrumb['url'] ?? '#' }}">{{ $breadcrumb['label'] }}</a>
+                                            </li>
+                                        @endif
+                                    @endforeach
+                                @else
+                                    <li class="breadcrumb-item"><a href="{{ url('/') }}">Accueil</a></li>
+                                    <li class="breadcrumb-item" aria-current="page">Dashboard</li>
+                                @endif
                             </ul>
                         </div>
                     </div>

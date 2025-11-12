@@ -19,7 +19,12 @@ class TableController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('tables.index', compact('tables'));
+        $breadcrumbs = [
+            ['label' => 'Accueil', 'url' => url('/')],
+            ['label' => 'Tables', 'url' => route('tables.index')],
+        ];
+
+        return view('tables.index', compact('tables', 'breadcrumbs'))->with('pageTitle', 'Tables');
     }
 
     public function search(Request $request): JsonResponse
@@ -50,9 +55,16 @@ class TableController extends Controller
      */
     public function create(): View
     {
+        $breadcrumbs = [
+            ['label' => 'Accueil', 'url' => url('/')],
+            ['label' => 'Tables', 'url' => route('tables.index')],
+            ['label' => 'Ajouter une table', 'url' => route('tables.create')],
+        ];
+
         return view('tables.form', [
             'table' => new ReceptionTable(),
-        ]);
+            'breadcrumbs' => $breadcrumbs,
+        ])->with('pageTitle', 'Ajouter une table');
     }
 
     /**
@@ -72,7 +84,13 @@ class TableController extends Controller
      */
     public function edit(ReceptionTable $table): View
     {
-        return view('tables.form', compact('table'));
+        $breadcrumbs = [
+            ['label' => 'Accueil', 'url' => url('/')],
+            ['label' => 'Tables', 'url' => route('tables.index')],
+            ['label' => 'Modifier la table', 'url' => route('tables.edit', $table)],
+        ];
+
+        return view('tables.form', compact('table', 'breadcrumbs'))->with('pageTitle', 'Modifier la table');
     }
 
     /**

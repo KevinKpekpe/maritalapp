@@ -13,7 +13,12 @@ class PreferenceController extends Controller
     {
         $data = $this->buildData();
 
-        return view('preferences.index', $data);
+        $breadcrumbs = [
+            ['label' => 'Accueil', 'url' => url('/')],
+            ['label' => 'Préférences', 'url' => route('preferences.index')],
+        ];
+
+        return view('preferences.index', array_merge($data, ['breadcrumbs' => $breadcrumbs]))->with('pageTitle', 'Préférences');
     }
 
     public function search(Request $request): JsonResponse
