@@ -11,6 +11,9 @@
         <table class="table table-hover align-middle" id="guests-dt">
             <thead>
                 <tr>
+                    <th style="width: 40px;">
+                        <input type="checkbox" id="select-all-guests" title="Sélectionner tout">
+                    </th>
                     <th>Invité(s)</th>
                     <th>Type</th>
                     <th>Table</th>
@@ -27,6 +30,15 @@
             <tbody>
                 @foreach ($guests as $guest)
                     <tr @class(['table-danger' => $guest->trashed()])>
+                        <td>
+                            @if (!$guest->trashed() && !$guest->whatsapp_sent_at)
+                                <input type="checkbox" class="guest-checkbox" name="selected_guests[]" value="{{ $guest->id }}" data-guest-id="{{ $guest->id }}">
+                            @elseif (!$guest->trashed() && $guest->whatsapp_sent_at)
+                                <span class="text-muted" title="Invitation déjà envoyée">
+                                    <i class="ti ti-check text-success"></i>
+                                </span>
+                            @endif
+                        </td>
                         <td>
                             <span class="fw-semibold">{{ $guest->display_name }}</span>
                         </td>

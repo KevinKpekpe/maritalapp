@@ -162,6 +162,58 @@ class GuestController extends Controller
         }
     }
 
+    /**
+     * Envoie des invitations WhatsApp à plusieurs invités sélectionnés.
+     */
+    public function sendBulkInvitations(Request $request, UltraMsgService $whatsAppService): RedirectResponse
+    {
+        $request->validate([
+            'guest_ids' => ['required', 'array', 'min:1', 'max:100'],
+            'guest_ids.*' => ['required', 'integer', 'exists:guests,id'],
+        ]);
+
+        $guestIds = $request->input('guest_ids');
+        $guests = Guest::whereIn('id', $guestIds)
+            ->whereNull('deleted_at')
+            ->get();
+
+        if ($guests->isEmpty()) {
+            return redirect()
+                ->route('guests.index')
+                ->with('error', 'Aucun invité valide sélectionné.');
+        }
+
+        $successCount = 0;
+        $errorCount = 0;
+        $errors = [];
+
+        foreach ($guests as $guest) {
+            try {
+                $result = $whatsAppService->sendInvitation($guest);
+                if ($result['sent']) {
+                    $successCount++;
+                } else {
+                    $errorCount++;
+                    $errors[] = $guest->display_name.': Échec de l\'envoi';
+                }
+            } catch (\Exception $e) {
+                $errorCount++;
+                $errors[] = $guest->display_name.': '.$e->getMessage();
+                report($e);
+            }
+        }
+
+        $message = "Envoi terminé : {$successCount} succès";
+        if ($errorCount > 0) {
+            $message .= ", {$errorCount} échecs";
+        }
+
+        return redirect()
+            ->route('guests.index')
+            ->with('status', $message)
+            ->with('bulk_errors', $errors);
+    }
+
     protected function validateData(Request $request): array
     {
         $validated = $request->validate([

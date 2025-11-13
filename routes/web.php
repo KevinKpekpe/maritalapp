@@ -99,6 +99,7 @@ Route::middleware('auth.session')->group(function () {
 
     Route::get('guests/search', [GuestController::class, 'search'])->name('guests.search');
     Route::post('guests/{guest}/send-invitation', [GuestController::class, 'sendInvitation'])->name('guests.send_invitation');
+    Route::post('guests/send-bulk-invitations', [GuestController::class, 'sendBulkInvitations'])->name('guests.send_bulk_invitations');
     Route::get('guests/export', [GuestController::class, 'export'])->name('guests.export');
     Route::get('guests/import', [GuestController::class, 'showImport'])->name('guests.import.show');
     Route::get('guests/import/template', [GuestController::class, 'downloadTemplate'])->name('guests.import.template');

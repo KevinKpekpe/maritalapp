@@ -15,6 +15,9 @@
                                 <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
                             </span>
                         </div>
+                        <button type="button" id="send-selected-btn" class="btn btn-success d-none" disabled>
+                            <i class="ti ti-brand-whatsapp me-2"></i> Envoyer à la sélection (<span id="selected-count">0</span>)
+                        </button>
                         <a href="{{ route('guests.export') }}" class="btn btn-outline-success">
                             <i class="ti ti-download me-2"></i> Exporter
                         </a>
@@ -36,6 +39,16 @@
                 @if (session('error'))
                     <div class="alert alert-danger" role="alert">
                         {{ session('error') }}
+                    </div>
+                @endif
+                @if (session('bulk_errors') && count(session('bulk_errors')) > 0)
+                    <div class="alert alert-warning" role="alert">
+                        <strong>Erreurs d'envoi :</strong>
+                        <ul class="mb-0 mt-2">
+                            @foreach (session('bulk_errors') as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
                     </div>
                 @endif
                 @if (session('import_errors') && count(session('import_errors')) > 0)
@@ -67,6 +80,7 @@
         const endpoint = '{{ route('guests.search') }}';
         let debounceTimer = null;
         let activeController = null;
+        const MAX_SELECTION = 100;
 
         function toggleLoader(visible) {
             if (!loader) return;
@@ -102,6 +116,7 @@
                 })
                 .then(data => {
                     resultsContainer.innerHTML = data.html;
+                    initSelectionHandlers();
                 })
                 .catch(error => {
                     if (error.name !== 'AbortError') {
@@ -111,6 +126,135 @@
                 .finally(() => {
                     toggleLoader(false);
                 });
+        }
+
+        function updateSelectionUI() {
+            const checkboxes = document.querySelectorAll('.guest-checkbox:not(:disabled)');
+            const checked = document.querySelectorAll('.guest-checkbox:checked');
+            const sendBtn = document.getElementById('send-selected-btn');
+            const countSpan = document.getElementById('selected-count');
+            const selectAll = document.getElementById('select-all-guests');
+
+            const count = checked.length;
+
+            if (count > 0) {
+                sendBtn.classList.remove('d-none');
+                sendBtn.disabled = false;
+                countSpan.textContent = count;
+            } else {
+                sendBtn.classList.add('d-none');
+                sendBtn.disabled = true;
+            }
+
+            if (selectAll) {
+                if (count === 0) {
+                    selectAll.indeterminate = false;
+                    selectAll.checked = false;
+                } else if (count === checkboxes.length) {
+                    selectAll.indeterminate = false;
+                    selectAll.checked = true;
+                } else {
+                    selectAll.indeterminate = true;
+                }
+            }
+        }
+
+        function initSelectionHandlers() {
+            const selectAll = document.getElementById('select-all-guests');
+            const checkboxes = document.querySelectorAll('.guest-checkbox');
+            const sendBtn = document.getElementById('send-selected-btn');
+
+            // Sélectionner/désélectionner tout
+            if (selectAll) {
+                selectAll.addEventListener('change', function() {
+                    const enabledCheckboxes = Array.from(checkboxes).filter(cb => !cb.disabled);
+                    const checkedCount = Array.from(checkboxes).filter(cb => cb.checked && !cb.disabled).length;
+
+                    if (this.checked) {
+                        // Sélectionner jusqu'à la limite
+                        let selected = 0;
+                        enabledCheckboxes.forEach(cb => {
+                            if (selected < MAX_SELECTION) {
+                                cb.checked = true;
+                                selected++;
+                            }
+                        });
+                        if (selected >= MAX_SELECTION) {
+                            alert('Limite de ' + MAX_SELECTION + ' invités atteinte.');
+                        }
+                    } else {
+                        enabledCheckboxes.forEach(cb => {
+                            cb.checked = false;
+                        });
+                    }
+                    updateSelectionUI();
+                });
+            }
+
+            // Gérer la sélection individuelle
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const checked = document.querySelectorAll('.guest-checkbox:checked').length;
+
+                    if (this.checked && checked > MAX_SELECTION) {
+                        this.checked = false;
+                        alert('Vous ne pouvez sélectionner que ' + MAX_SELECTION + ' invités maximum.');
+                        return;
+                    }
+
+                    updateSelectionUI();
+                });
+            });
+
+            // Bouton d'envoi en masse
+            if (sendBtn) {
+                sendBtn.addEventListener('click', function() {
+                    const checked = document.querySelectorAll('.guest-checkbox:checked');
+                    const guestIds = Array.from(checked).map(cb => cb.value);
+
+                    if (guestIds.length === 0) {
+                        alert('Veuillez sélectionner au moins un invité.');
+                        return;
+                    }
+
+                    if (guestIds.length > MAX_SELECTION) {
+                        alert('Vous ne pouvez sélectionner que ' + MAX_SELECTION + ' invités maximum.');
+                        return;
+                    }
+
+                    if (!confirm('Envoyer les invitations WhatsApp à ' + guestIds.length + ' invité(s) sélectionné(s) ?')) {
+                        return;
+                    }
+
+                    // Désactiver le bouton pendant l'envoi
+                    sendBtn.disabled = true;
+                    sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Envoi en cours...';
+
+                    // Créer un formulaire et le soumettre
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ route('guests.send_bulk_invitations') }}';
+
+                    const csrfToken = document.createElement('input');
+                    csrfToken.type = 'hidden';
+                    csrfToken.name = '_token';
+                    csrfToken.value = '{{ csrf_token() }}';
+                    form.appendChild(csrfToken);
+
+                    guestIds.forEach(id => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'guest_ids[]';
+                        input.value = id;
+                        form.appendChild(input);
+                    });
+
+                    document.body.appendChild(form);
+                    form.submit();
+                });
+            }
+
+            updateSelectionUI();
         }
 
         if (searchInput) {
@@ -123,6 +267,9 @@
                 }, 300);
             });
         }
+
+        // Initialiser les handlers au chargement de la page
+        initSelectionHandlers();
     })();
 </script>
 @endpush
