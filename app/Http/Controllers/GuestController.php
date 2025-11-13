@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Guest;
 use App\Models\ReceptionTable;
 use App\Services\WhatsApp\UltraMsgService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class GuestController extends Controller
 {
@@ -194,6 +197,270 @@ class GuestController extends Controller
         }
 
         return $validated;
+    }
+
+    /**
+     * Exporte la liste des invités en fichier PDF avec noms numérotés.
+     */
+    public function export()
+    {
+        $filename = 'invites_'.now()->format('Y-m-d_His').'.pdf';
+
+        // Récupérer tous les invités avec leur table, triés par prénom
+        $guests = Guest::with(['table' => fn ($query) => $query->withTrashed()])
+            ->orderBy('primary_first_name')
+            ->get();
+
+        $pdf = Pdf::loadView('guests.export-pdf', [
+            'guests' => $guests,
+            'title' => 'Liste des invités',
+        ]);
+
+        return $pdf->download($filename);
+    }
+
+    /**
+     * Télécharge un modèle CSV pour l'import.
+     */
+    public function downloadTemplate(): StreamedResponse
+    {
+        $filename = 'modele_import_invites.csv';
+
+        return response()->streamDownload(function () {
+            $handle = fopen('php://output', 'w');
+
+            // En-têtes UTF-8 avec BOM pour Excel
+            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // En-têtes du CSV
+            fputcsv($handle, [
+                'Type',
+                'Prénom principal',
+                'Prénom partenaire',
+                'Téléphone',
+                'Email',
+                'Table',
+            ], ';');
+
+            // Ajouter quelques exemples
+            fputcsv($handle, [
+                'solo',
+                'Jean',
+                '',
+                '+243 999 123 456',
+                'jean@example.com',
+                'Table 1',
+            ], ';');
+
+            fputcsv($handle, [
+                'couple',
+                'Marie',
+                'Pierre',
+                '+33 1 23 45 67 89',
+                'marie@example.com',
+                'Table 2',
+            ], ';');
+
+            fputcsv($handle, [
+                'solo',
+                'Sophie',
+                '',
+                '+243 888 765 432',
+                '',
+                'Table 1',
+            ], ';');
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
+    }
+
+    /**
+     * Affiche le formulaire d'import des invités.
+     */
+    public function showImport(): View
+    {
+        $breadcrumbs = [
+            ['label' => 'Accueil', 'url' => url('/')],
+            ['label' => 'Invités', 'url' => route('guests.index')],
+            ['label' => 'Importer des invités', 'url' => route('guests.import.show')],
+        ];
+
+        return view('guests.import', compact('breadcrumbs'))->with('pageTitle', 'Importer des invités');
+    }
+
+    /**
+     * Importe des invités depuis un fichier CSV.
+     */
+    public function import(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'csv_file' => ['required', 'file', 'mimes:csv,txt', 'max:10240'], // 10MB max
+        ]);
+
+        $file = $request->file('csv_file');
+        $handle = fopen($file->getRealPath(), 'r');
+
+        // Lire la première ligne (en-têtes)
+        $headers = fgetcsv($handle, 0, ';');
+        if ($headers === false) {
+            return redirect()
+                ->route('guests.import.show')
+                ->with('error', 'Le fichier CSV est vide ou invalide.');
+        }
+
+        // Normaliser les en-têtes (supprimer BOM UTF-8 si présent)
+        $headers = array_map(function ($header) {
+            return trim(str_replace("\xEF\xBB\xBF", '', $header));
+        }, $headers);
+
+        // Mapping des colonnes attendues
+        $columnMap = [
+            'id' => null,
+            'type' => null,
+            'prénom principal' => null,
+            'prénom partenaire' => null,
+            'téléphone' => null,
+            'phone' => null,
+            'email' => null,
+            'table' => null,
+            'statut rsvp' => null,
+        ];
+
+        // Trouver les indices des colonnes
+        foreach ($headers as $index => $header) {
+            $headerLower = mb_strtolower(trim($header));
+            foreach ($columnMap as $key => $value) {
+                if (str_contains($headerLower, $key)) {
+                    $columnMap[$key] = $index;
+                    break;
+                }
+            }
+        }
+
+        // Vérifier les colonnes obligatoires
+        $requiredColumns = ['type', 'prénom principal', 'téléphone'];
+        $missingColumns = [];
+        foreach ($requiredColumns as $col) {
+            if ($columnMap[$col] === null && ($col !== 'téléphone' || $columnMap['phone'] === null)) {
+                $missingColumns[] = $col;
+            }
+        }
+
+        if (! empty($missingColumns)) {
+            fclose($handle);
+            return redirect()
+                ->route('guests.import.show')
+                ->with('error', 'Colonnes manquantes dans le CSV : '.implode(', ', $missingColumns));
+        }
+
+        $imported = 0;
+        $errors = [];
+        $lineNumber = 1;
+
+        // Récupérer toutes les tables pour le mapping
+        $tables = ReceptionTable::all()->keyBy('name');
+
+        DB::beginTransaction();
+        try {
+            while (($row = fgetcsv($handle, 0, ';')) !== false) {
+                $lineNumber++;
+
+                if (count($row) < 3) {
+                    continue; // Ignorer les lignes vides
+                }
+
+                // Extraire les données selon le mapping
+                $type = trim($row[$columnMap['type']] ?? '');
+                $primaryFirstName = trim($row[$columnMap['prénom principal']] ?? '');
+                $secondaryFirstName = trim($row[$columnMap['prénom partenaire']] ?? '');
+                $phone = trim($row[$columnMap['téléphone']] ?? $row[$columnMap['phone']] ?? '');
+                $email = trim($row[$columnMap['email']] ?? '');
+                $tableName = trim($row[$columnMap['table']] ?? '');
+
+                // Validation basique
+                if (empty($primaryFirstName) || empty($phone)) {
+                    $errors[] = "Ligne {$lineNumber}: Prénom principal et téléphone sont requis";
+                    continue;
+                }
+
+                if (! in_array($type, ['solo', 'couple'])) {
+                    $type = 'solo'; // Par défaut
+                }
+
+                if ($type === 'couple' && empty($secondaryFirstName)) {
+                    $errors[] = "Ligne {$lineNumber}: Prénom partenaire requis pour un couple";
+                    continue;
+                }
+
+                // Formater le numéro de téléphone
+                $formattedPhone = UltraMsgService::formatPhone($phone);
+                if ($formattedPhone === null) {
+                    $errors[] = "Ligne {$lineNumber}: Numéro de téléphone invalide ({$phone})";
+                    continue;
+                }
+
+                // Trouver la table (obligatoire)
+                $tableId = null;
+                if (! empty($tableName)) {
+                    $table = $tables->firstWhere('name', $tableName);
+                    if ($table) {
+                        $tableId = $table->id;
+                    } else {
+                        $errors[] = "Ligne {$lineNumber}: Table '{$tableName}' introuvable";
+                        continue;
+                    }
+                } else {
+                    // Si aucune table n'est spécifiée, utiliser la première table disponible ou générer une erreur
+                    $firstTable = $tables->first();
+                    if ($firstTable) {
+                        $tableId = $firstTable->id;
+                    } else {
+                        $errors[] = "Ligne {$lineNumber}: Aucune table disponible dans le système";
+                        continue;
+                    }
+                }
+
+                // Créer l'invité
+                try {
+                    Guest::create([
+                        'reception_table_id' => $tableId,
+                        'type' => $type,
+                        'primary_first_name' => $primaryFirstName,
+                        'secondary_first_name' => $type === 'couple' ? $secondaryFirstName : null,
+                        'phone' => $formattedPhone,
+                        'email' => ! empty($email) ? $email : null,
+                        'invitation_token' => Str::uuid()->toString(),
+                        'rsvp_status' => 'pending',
+                    ]);
+                    $imported++;
+                } catch (\Exception $e) {
+                    $errors[] = "Ligne {$lineNumber}: Erreur lors de la création - {$e->getMessage()}";
+                }
+            }
+
+            DB::commit();
+            fclose($handle);
+
+            $message = "{$imported} invité(s) importé(s) avec succès.";
+            if (! empty($errors)) {
+                $message .= ' '.count($errors).' erreur(s) rencontrée(s).';
+            }
+
+            return redirect()
+                ->route('guests.index')
+                ->with('status', $message)
+                ->with('import_errors', $errors);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            fclose($handle);
+
+            return redirect()
+                ->route('guests.import.show')
+                ->with('error', 'Erreur lors de l\'import : '.$e->getMessage());
+        }
     }
 
     protected function availableTables()

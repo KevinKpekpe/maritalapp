@@ -79,7 +79,8 @@ class UserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validateData($request);
-        $data['password'] = Hash::make($data['password']);
+        // Le cast 'hashed' dans le modèle User gère automatiquement le hashage
+        // Pas besoin de Hash::make() ici
 
         User::create($data);
 
@@ -107,10 +108,8 @@ class UserController extends Controller
     {
         $data = $this->validateData($request, $user->id);
 
-        // Si un nouveau mot de passe est fourni, le hasher
-        if (!empty($data['password'])) {
-            $data['password'] = Hash::make($data['password']);
-        } else {
+        // Si un nouveau mot de passe est fourni, le cast 'hashed' dans le modèle User gère automatiquement le hashage
+        if (empty($data['password'])) {
             // Sinon, ne pas modifier le mot de passe
             unset($data['password']);
         }

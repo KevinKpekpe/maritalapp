@@ -75,7 +75,7 @@
                   <input class="form-check-input input-primary" type="checkbox" id="remember" name="remember" {{ old('remember') ? 'checked' : '' }}>
                   <label class="form-check-label text-muted" for="remember">Se souvenir de moi</label>
                 </div>
-                <a href="#" class="text-secondary f-w-400">Mot de passe oublié ?</a>
+                <a href="{{ route('password.forgot') }}" class="text-secondary f-w-400">Mot de passe oublié ?</a>
               </div>
               <div class="d-grid mt-4">
                 <button type="submit" class="btn btn-primary">Se connecter</button>

@@ -15,6 +15,9 @@
                                 <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
                             </span>
                         </div>
+                        <a href="{{ route('preferences.export') }}" class="btn btn-outline-success">
+                            <i class="ti ti-download me-2"></i> Exporter les statistiques
+                        </a>
                     </div>
                 </div>
             </div>

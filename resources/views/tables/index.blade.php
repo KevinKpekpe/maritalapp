@@ -15,6 +15,12 @@
                                 <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
                             </span>
                         </div>
+                        <a href="{{ route('tables.export') }}" class="btn btn-outline-success">
+                            <i class="ti ti-download me-2"></i> Exporter
+                        </a>
+                        <a href="{{ route('tables.import.show') }}" class="btn btn-outline-info">
+                            <i class="ti ti-upload me-2"></i> Importer
+                        </a>
                         <a href="{{ route('tables.create') }}" class="btn btn-primary">
                             <i class="ti ti-layout-grid-add me-2"></i> Ajouter une table
                         </a>
@@ -25,6 +31,21 @@
                 @if (session('status'))
                     <div class="alert alert-success" role="alert">
                         {{ session('status') }}
+                    </div>
+                @endif
+                @if (session('error'))
+                    <div class="alert alert-danger" role="alert">
+                        {{ session('error') }}
+                    </div>
+                @endif
+                @if (session('import_errors') && count(session('import_errors')) > 0)
+                    <div class="alert alert-warning" role="alert">
+                        <strong>Erreurs d'import :</strong>
+                        <ul class="mb-0 mt-2">
+                            @foreach (session('import_errors') as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
                     </div>
                 @endif
 

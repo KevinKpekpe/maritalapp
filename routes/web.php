@@ -19,6 +19,14 @@ Route::post('invitations/{token}/preferences', [InvitationController::class, 'up
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
 
+Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('password.forgot');
+Route::post('/forgot-password', [AuthController::class, 'sendResetCode'])->name('password.send-code');
+Route::get('/verify-code', [AuthController::class, 'showCodeVerificationForm'])->name('password.code.verify');
+Route::post('/verify-code', [AuthController::class, 'verifyResetCode'])->name('password.verify-code');
+Route::post('/resend-code', [AuthController::class, 'resendResetCode'])->name('password.resend-code');
+Route::get('/reset-password', [AuthController::class, 'showResetPasswordForm'])->name('password.reset');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
+
 Route::middleware('auth.session')->group(function () {
     Route::get('/', function () {
         $totalGuests = Guest::count();
@@ -91,14 +99,23 @@ Route::middleware('auth.session')->group(function () {
 
     Route::get('guests/search', [GuestController::class, 'search'])->name('guests.search');
     Route::post('guests/{guest}/send-invitation', [GuestController::class, 'sendInvitation'])->name('guests.send_invitation');
+    Route::get('guests/export', [GuestController::class, 'export'])->name('guests.export');
+    Route::get('guests/import', [GuestController::class, 'showImport'])->name('guests.import.show');
+    Route::get('guests/import/template', [GuestController::class, 'downloadTemplate'])->name('guests.import.template');
+    Route::post('guests/import', [GuestController::class, 'import'])->name('guests.import');
     Route::resource('guests', GuestController::class)->except(['show']);
     Route::post('guests/{id}/restore', [GuestController::class, 'restore'])->name('guests.restore');
 
     Route::get('tables/search', [TableController::class, 'search'])->name('tables.search');
+    Route::get('tables/export', [TableController::class, 'export'])->name('tables.export');
+    Route::get('tables/import', [TableController::class, 'showImport'])->name('tables.import.show');
+    Route::get('tables/import/template', [TableController::class, 'downloadTemplate'])->name('tables.import.template');
+    Route::post('tables/import', [TableController::class, 'import'])->name('tables.import');
     Route::resource('tables', TableController::class)->except(['show']);
     Route::post('tables/{id}/restore', [TableController::class, 'restore'])->name('tables.restore');
 
     Route::get('preferences/search', [PreferenceController::class, 'search'])->name('preferences.search');
+    Route::get('preferences/export', [PreferenceController::class, 'export'])->name('preferences.export');
     Route::get('preferences', [PreferenceController::class, 'index'])->name('preferences.index');
 
     Route::get('beverages/search', [BeverageController::class, 'search'])->name('beverages.search');

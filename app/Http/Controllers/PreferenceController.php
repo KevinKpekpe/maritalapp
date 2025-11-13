@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Beverage;
 use App\Models\GuestPreference;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -80,5 +82,51 @@ class PreferenceController extends Controller
             'preferences' => $preferences,
             'summary' => $summary,
         ];
+    }
+
+    /**
+     * Exporte les statistiques des préférences en PDF.
+     */
+    public function export()
+    {
+        $filename = 'statistiques_preferences_'.now()->format('Y-m-d_His').'.pdf';
+
+        // Récupérer toutes les préférences avec les boissons
+        $preferences = GuestPreference::with('beverage')
+            ->get();
+
+        // Grouper par catégorie puis par boisson
+        $statsByCategory = $preferences
+            ->groupBy(function ($preference) {
+                return $preference->beverage->category ?? 'autre';
+            })
+            ->map(function ($categoryPreferences, $category) {
+                // Grouper par boisson dans cette catégorie
+                $beverageStats = $categoryPreferences
+                    ->groupBy('beverage_id')
+                    ->map(function ($items, $beverageId) {
+                        $beverage = $items->first()->beverage;
+                        return [
+                            'name' => $beverage->name,
+                            'count' => $items->count(),
+                        ];
+                    })
+                    ->sortByDesc('count')
+                    ->values();
+
+                return [
+                    'category' => ucfirst($category),
+                    'beverages' => $beverageStats,
+                    'total' => $categoryPreferences->count(),
+                ];
+            })
+            ->sortKeys();
+
+        $pdf = Pdf::loadView('preferences.export-pdf', [
+            'statsByCategory' => $statsByCategory,
+            'title' => 'Statistiques des préférences',
+        ]);
+
+        return $pdf->download($filename);
     }
 }
