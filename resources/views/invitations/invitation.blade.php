@@ -525,12 +525,30 @@
             width: clamp(140px, 18vw, 220px);
             opacity: 0.85;
             filter: drop-shadow(0 24px 45px rgba(0, 0, 0, 0.18));
+            pointer-events: none;
         }
 
         .bouquet-deco--left {
             top: -60px;
             left: -70px;
             transform: rotate(-8deg);
+        }
+
+        @media (max-width: 768px) {
+            .bouquet-deco {
+                width: clamp(120px, 38vw, 180px);
+                opacity: 0.75;
+            }
+
+            .bouquet-deco--left {
+                top: -50px;
+                left: -35px;
+            }
+
+            .bouquet-deco--right {
+                bottom: -55px;
+                right: -30px;
+            }
         }
 
         .bouquet-deco--right {
@@ -924,9 +942,9 @@
             <div
                 class="relative ornate-card max-w-5xl mx-auto px-7 sm:px-12 lg:px-16 py-14 sm:py-16 shadow-2xl border border-white/20">
                 <img src="{{ asset('invitations/bouquet.png') }}" alt="Décoration bouquet"
-                    class="bouquet-deco bouquet-deco--left hidden md:block">
+                    class="bouquet-deco bouquet-deco--left">
                 <img src="{{ asset('invitations/bouquet.png') }}" alt="Décoration bouquet"
-                    class="bouquet-deco bouquet-deco--right hidden md:block">
+                    class="bouquet-deco bouquet-deco--right">
                 <div class="flex flex-col lg:flex-row items-center lg:items-start gap-12 lg:gap-14">
                     <div class="flex-1 space-y-6 lg:space-y-8 text-center lg:text-left animate-fade-up">
                         <div class="space-y-4">
