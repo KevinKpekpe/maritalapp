@@ -166,7 +166,17 @@ class GuestController extends Controller
             'type' => ['required', 'in:solo,couple'],
             'primary_first_name' => ['required', 'string', 'max:100'],
             'secondary_first_name' => ['nullable', 'string', 'max:100'],
-            'phone' => ['required', 'string', 'max:30'],
+            'phone' => [
+                'required',
+                'string',
+                'max:30',
+                function ($attribute, $value, $fail) {
+                    $formattedPhone = UltraMsgService::formatPhone($value);
+                    if ($formattedPhone === null) {
+                        $fail('Le numéro de téléphone fourni est invalide.');
+                    }
+                },
+            ],
             'email' => ['nullable', 'email', 'max:150'],
         ]);
 
@@ -176,6 +186,11 @@ class GuestController extends Controller
             $request->validate([
                 'secondary_first_name' => ['required', 'string', 'max:100'],
             ]);
+        }
+
+        // Formater le numéro de téléphone (déjà validé, on peut le formater en toute sécurité)
+        if (isset($validated['phone'])) {
+            $validated['phone'] = UltraMsgService::formatPhone($validated['phone']);
         }
 
         return $validated;
