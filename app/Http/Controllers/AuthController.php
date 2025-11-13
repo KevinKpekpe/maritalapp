@@ -271,4 +271,73 @@ class AuthController extends Controller
 
         return back()->with('status', 'Un nouveau code a été envoyé à votre adresse email.');
     }
+
+    /**
+     * Affiche le profil de l'utilisateur connecté.
+     */
+    public function showProfile(): View
+    {
+        $user = Auth::user();
+
+        $breadcrumbs = [
+            ['label' => 'Accueil', 'url' => url('/')],
+            ['label' => 'Profil', 'url' => route('profile.show')],
+        ];
+
+        return view('profile.show', compact('user', 'breadcrumbs'))->with('pageTitle', 'Mon Profil');
+    }
+
+    /**
+     * Met à jour les informations du profil.
+     */
+    public function updateProfile(Request $request): RedirectResponse
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
+        ]);
+
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->save();
+
+        return redirect()->route('profile.show')
+            ->with('success', 'Vos informations ont été mises à jour avec succès.');
+    }
+
+    /**
+     * Change le mot de passe de l'utilisateur connecté.
+     */
+    public function changePassword(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ], [
+            'current_password.required' => 'Le mot de passe actuel est requis.',
+            'password.required' => 'Le nouveau mot de passe est requis.',
+            'password.min' => 'Le nouveau mot de passe doit contenir au moins 8 caractères.',
+            'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
+        ]);
+
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Vérifier le mot de passe actuel
+        if (!Hash::check($request->current_password, $user->password)) {
+            return back()
+                ->withErrors(['current_password' => 'Le mot de passe actuel est incorrect.'])
+                ->withInput();
+        }
+
+        // Mettre à jour le mot de passe (le cast 'hashed' gère automatiquement le hashage)
+        $user->password = $request->password;
+        $user->save();
+
+        return redirect()->route('profile.show')
+            ->with('success', 'Votre mot de passe a été modifié avec succès.');
+    }
 }

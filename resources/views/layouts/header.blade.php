@@ -247,9 +247,9 @@
                             <div class="tab-content" id="mysrpTabContent">
                                 <div class="tab-pane fade show active" id="drp-tab-1" role="tabpanel"
                                     aria-labelledby="drp-t1" tabindex="0">
-                                    <a href="#" class="dropdown-item disabled">
+                                    <a href="{{ route('profile.show') }}" class="dropdown-item">
                                         <i class="ti ti-user"></i>
-                                        <span>{{ Auth::user()->email ?? 'Non défini' }}</span>
+                                        <span>Mon Profil</span>
                                     </a>
                                     <a href="{{ route('logout') }}" class="dropdown-item">
                                         <i class="ti ti-power"></i>

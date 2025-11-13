@@ -125,6 +125,10 @@ Route::middleware('auth.session')->group(function () {
     Route::resource('users', UserController::class)->except(['show']);
     Route::post('users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
 
+    Route::get('/profile', [AuthController::class, 'showProfile'])->name('profile.show');
+    Route::put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
+    Route::post('/profile/change-password', [AuthController::class, 'changePassword'])->name('profile.change-password');
+
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 });
 
