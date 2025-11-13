@@ -1,59 +1,208 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Application de Gestion de Mariage
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Application web complète pour la gestion d'un événement de mariage, développée avec Laravel 12. Cette application permet de gérer les invités, les tables de réception, les préférences alimentaires et l'envoi d'invitations via WhatsApp.
 
-## About Laravel
+## 🎯 Fonctionnalités principales
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Gestion des invités
+- Création, modification et suppression d'invités
+- Gestion des couples (invités avec partenaire)
+- Attribution de tables de réception
+- Suivi du statut RSVP (confirmé, en attente)
+- Envoi d'invitations personnalisées via WhatsApp
+- Export PDF avec liste des invités et leurs tables associées
+- Import/Export CSV pour gestion en masse
+- Recherche et filtrage avancés
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Gestion des tables de réception
+- Création et gestion des tables
+- Attribution automatique ou manuelle des invités
+- Export PDF des tables
+- Import/Export CSV
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Gestion des préférences
+- Enregistrement des préférences alimentaires des invités
+- Gestion des boissons par catégorie
+- Statistiques des préférences par boisson et par catégorie
+- Export PDF des statistiques de préférences
 
-## Learning Laravel
+### Invitations numériques
+- Génération d'invitations personnalisées avec token unique
+- Envoi automatique via WhatsApp
+- Page publique pour confirmation RSVP
+- Téléchargement des invitations en PDF
+- Gestion des préférences directement depuis l'invitation
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### Authentification et sécurité
+- Système de connexion sécurisé
+- Réinitialisation de mot de passe par email avec code de vérification
+- Gestion du profil utilisateur
+- Changement de mot de passe
+- Gestion des utilisateurs administrateurs
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Dashboard
+- Statistiques en temps réel (invités totaux, confirmés, en attente)
+- Graphiques de confirmation hebdomadaires et mensuels
+- Vue d'ensemble des tables de réception
 
-## Laravel Sponsors
+## 🛠️ Technologies utilisées
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- **Backend**: Laravel 12 (PHP 8.2+)
+- **Base de données**: MySQL/PostgreSQL/SQLite
+- **PDF**: DomPDF (barryvdh/laravel-dompdf)
+- **WhatsApp**: UltraMsg WhatsApp PHP SDK
+- **Frontend**: Bootstrap 5, JavaScript vanilla
+- **Authentification**: Laravel Session Authentication
 
-### Premium Partners
+## 📋 Prérequis
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- PHP 8.2 ou supérieur
+- Composer
+- Node.js et npm (pour les assets)
+- Base de données (MySQL, PostgreSQL ou SQLite)
+- Serveur web (Apache/Nginx) ou PHP built-in server
+- Configuration WhatsApp API (UltraMsg) pour l'envoi de messages
 
-## Contributing
+## 🚀 Installation
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+1. **Cloner le dépôt**
+```bash
+git clone https://github.com/KevinKpekpe/maritalapp.git
+cd appmariage
+```
 
-## Code of Conduct
+2. **Installer les dépendances**
+```bash
+composer install
+npm install
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+3. **Configurer l'environnement**
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-## Security Vulnerabilities
+4. **Configurer la base de données**
+Éditez le fichier `.env` et configurez vos paramètres de base de données :
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=nom_de_votre_base
+DB_USERNAME=votre_utilisateur
+DB_PASSWORD=votre_mot_de_passe
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+5. **Exécuter les migrations**
+```bash
+php artisan migrate
+```
 
-## License
+6. **Optionnel : Charger des données de démonstration**
+```bash
+php artisan db:seed
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+7. **Lancer le serveur de développement**
+```bash
+php artisan serve
+```
+
+L'application sera accessible à l'adresse `http://localhost:8000`
+
+## ⚙️ Configuration
+
+### Configuration WhatsApp (UltraMsg)
+
+Pour activer l'envoi d'invitations via WhatsApp, configurez les variables suivantes dans votre fichier `.env` :
+
+```env
+ULTRA_MSG_INSTANCE_ID=votre_instance_id
+ULTRA_MSG_TOKEN=votre_token
+ULTRA_MSG_API_URL=https://api.ultramsg.com
+```
+
+### Configuration Email
+
+Pour la réinitialisation de mot de passe, configurez votre service d'email dans `.env` :
+
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS="noreply@example.com"
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+## 📁 Structure du projet
+
+```
+appmariage/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/      # Contrôleurs de l'application
+│   │   └── Middleware/       # Middleware personnalisés
+│   ├── Models/               # Modèles Eloquent
+│   ├── Mail/                 # Classes Mailables
+│   └── Services/
+│       └── WhatsApp/          # Service d'envoi WhatsApp
+├── database/
+│   ├── migrations/            # Migrations de base de données
+│   └── seeders/               # Seeders pour données de test
+├── resources/
+│   ├── views/                 # Vues Blade
+│   ├── css/                   # Styles CSS
+│   └── js/                    # Scripts JavaScript
+├── routes/
+│   └── web.php                # Routes web
+└── public/                    # Fichiers publics
+```
+
+## 🔐 Comptes par défaut
+
+Après avoir exécuté les seeders, vous pouvez vous connecter avec :
+- **Email**: admin@example.com
+- **Mot de passe**: password (à changer après la première connexion)
+
+## 📊 Fonctionnalités détaillées
+
+### Export/Import
+
+- **Export PDF des invités** : Liste complète avec noms et tables associées
+- **Export PDF des tables** : Liste de toutes les tables de réception
+- **Export PDF des statistiques** : Préférences par boisson et catégorie
+- **Import CSV** : Import en masse d'invités et de tables avec validation
+
+### Formatage des numéros de téléphone
+
+L'application gère automatiquement le formatage des numéros de téléphone internationaux, avec support des préfixes internationaux (1-3 chiffres) et application automatique du préfixe par défaut (243) si nécessaire.
+
+## 🧪 Tests
+
+```bash
+php artisan test
+```
+
+## 📝 License
+
+Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
+
+## 👥 Auteur
+
+Développé par **SpectreCoding**
+
+## 🤝 Contribution
+
+Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou une pull request.
+
+## 📞 Support
+
+Pour toute question ou problème, veuillez ouvrir une issue sur le dépôt GitHub.
+
+---
+
+**Note**: Cette application est conçue pour la gestion d'événements de mariage. Assurez-vous de respecter les réglementations locales concernant l'envoi de messages WhatsApp et la collecte de données personnelles.
