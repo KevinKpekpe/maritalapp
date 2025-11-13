@@ -41,7 +41,6 @@ class GuestController extends Controller
         if ($query !== '') {
             $guestsQuery->where(function ($subQuery) use ($query) {
                 $subQuery->where('primary_first_name', 'like', "%{$query}%")
-                    ->orWhere('secondary_first_name', 'like', "%{$query}%")
                     ->orWhere('phone', 'like', "%{$query}%")
                     ->orWhere('email', 'like', "%{$query}%")
                     ->orWhereHas('table', function ($tableQuery) use ($query) {
@@ -219,8 +218,7 @@ class GuestController extends Controller
         $validated = $request->validate([
             'reception_table_id' => ['required', 'exists:reception_tables,id'],
             'type' => ['required', 'in:solo,couple'],
-            'primary_first_name' => ['required', 'string', 'max:100'],
-            'secondary_first_name' => ['nullable', 'string', 'max:100'],
+            'primary_first_name' => ['required', 'string', 'max:255'],
             'phone' => [
                 'required',
                 'string',
@@ -234,14 +232,6 @@ class GuestController extends Controller
             ],
             'email' => ['nullable', 'email', 'max:150'],
         ]);
-
-        if ($validated['type'] === 'solo') {
-            $validated['secondary_first_name'] = null;
-        } else {
-            $request->validate([
-                'secondary_first_name' => ['required', 'string', 'max:100'],
-            ]);
-        }
 
         // Formater le numéro de téléphone (déjà validé, on peut le formater en toute sécurité)
         if (isset($validated['phone'])) {
@@ -288,7 +278,6 @@ class GuestController extends Controller
             fputcsv($handle, [
                 'Type',
                 'Prénom principal',
-                'Prénom partenaire',
                 'Téléphone',
                 'Email',
                 'Table',
@@ -298,7 +287,6 @@ class GuestController extends Controller
             fputcsv($handle, [
                 'solo',
                 'Jean',
-                '',
                 '+243 999 123 456',
                 'jean@example.com',
                 'Table 1',
@@ -306,8 +294,7 @@ class GuestController extends Controller
 
             fputcsv($handle, [
                 'couple',
-                'Marie',
-                'Pierre',
+                'Marie & Pierre',
                 '+33 1 23 45 67 89',
                 'marie@example.com',
                 'Table 2',
@@ -373,7 +360,6 @@ class GuestController extends Controller
             'id' => null,
             'type' => null,
             'prénom principal' => null,
-            'prénom partenaire' => null,
             'téléphone' => null,
             'phone' => null,
             'email' => null,
@@ -427,7 +413,6 @@ class GuestController extends Controller
                 // Extraire les données selon le mapping
                 $type = trim($row[$columnMap['type']] ?? '');
                 $primaryFirstName = trim($row[$columnMap['prénom principal']] ?? '');
-                $secondaryFirstName = trim($row[$columnMap['prénom partenaire']] ?? '');
                 $phone = trim($row[$columnMap['téléphone']] ?? $row[$columnMap['phone']] ?? '');
                 $email = trim($row[$columnMap['email']] ?? '');
                 $tableName = trim($row[$columnMap['table']] ?? '');
@@ -440,11 +425,6 @@ class GuestController extends Controller
 
                 if (! in_array($type, ['solo', 'couple'])) {
                     $type = 'solo'; // Par défaut
-                }
-
-                if ($type === 'couple' && empty($secondaryFirstName)) {
-                    $errors[] = "Ligne {$lineNumber}: Prénom partenaire requis pour un couple";
-                    continue;
                 }
 
                 // Formater le numéro de téléphone
@@ -481,7 +461,6 @@ class GuestController extends Controller
                         'reception_table_id' => $tableId,
                         'type' => $type,
                         'primary_first_name' => $primaryFirstName,
-                        'secondary_first_name' => $type === 'couple' ? $secondaryFirstName : null,
                         'phone' => $formattedPhone,
                         'email' => ! empty($email) ? $email : null,
                         'invitation_token' => Str::uuid()->toString(),

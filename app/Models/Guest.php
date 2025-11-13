@@ -15,7 +15,6 @@ class Guest extends Model
         'reception_table_id',
         'type',
         'primary_first_name',
-        'secondary_first_name',
         'phone',
         'email',
         'invitation_token',
@@ -47,10 +46,6 @@ class Guest extends Model
 
     public function getDisplayNameAttribute(): string
     {
-        if ($this->type === 'couple' && $this->secondary_first_name) {
-            return $this->primary_first_name.' & '.$this->secondary_first_name;
-        }
-
         return $this->primary_first_name;
     }
 }

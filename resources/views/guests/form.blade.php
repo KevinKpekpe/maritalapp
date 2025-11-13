@@ -26,21 +26,20 @@
 
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <label class="form-label" for="type">Type d’invité</label>
+                            <label class="form-label" for="type">Type d'invité</label>
                             <select class="form-select" id="type" name="type">
                                 <option value="solo" @selected(old('type', $guest->type ?? 'solo') === 'solo')>Solo</option>
                                 <option value="couple" @selected(old('type', $guest->type ?? 'solo') === 'couple')>Couple</option>
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label" for="primary_first_name">Prénom principal</label>
+                            <label class="form-label" for="primary_first_name">
+                                Nom complet
+                                <small class="text-muted">(Pour un couple, utilisez "Nom1 & Nom2")</small>
+                            </label>
                             <input type="text" class="form-control" id="primary_first_name" name="primary_first_name"
-                                value="{{ old('primary_first_name', $guest->primary_first_name) }}" placeholder="Ex : Daniella" required>
-                        </div>
-                        <div class="col-md-4" id="secondary-name-wrapper">
-                            <label class="form-label" for="secondary_first_name">Prénom du partenaire</label>
-                            <input type="text" class="form-control" id="secondary_first_name" name="secondary_first_name"
-                                value="{{ old('secondary_first_name', $guest->secondary_first_name) }}" placeholder="Ex : Raphaël">
+                                value="{{ old('primary_first_name', $guest->primary_first_name) }}"
+                                placeholder="Ex : Daniella ou Daniella & Raphaël" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" for="reception_table_id">Table assignée</label>
@@ -83,21 +82,6 @@
 @push('scripts')
 <script>
     (function () {
-        const typeSelect = document.getElementById('type');
-        const secondaryWrapper = document.getElementById('secondary-name-wrapper');
-        const secondaryInput = document.getElementById('secondary_first_name');
-
-        function toggleSecondaryField() {
-            const isCouple = typeSelect.value === 'couple';
-            secondaryWrapper.style.display = isCouple ? 'block' : 'none';
-            secondaryInput.required = isCouple;
-            if (!isCouple) {
-                secondaryInput.value = '';
-            }
-        }
-
-        typeSelect.addEventListener('change', toggleSecondaryField);
-        toggleSecondaryField();
 
         // Validation du numéro de téléphone
         const phoneInput = document.getElementById('phone');

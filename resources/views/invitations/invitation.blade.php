@@ -956,7 +956,9 @@
                                 <p
                                     class="font-serif text-sm sm:text-base tracking-[0.26em] uppercase text-ink font-medium">
                                     {{ $event['date_long'] ?? '' }}</p>
-                                <p class="font-display text-3xl text-accent/90">Invitation pour {{ $guest->display_name }}</p>
+                                <p class="font-display text-3xl text-accent/90">
+                                    Invitation pour {{ $guest->type === 'couple' ? 'couple '.$guest->primary_first_name : $guest->primary_first_name }}
+                                </p>
                                 @if ($guest->table)
                                     <p class="font-display text-2xl text-accent/80">Table : {{ $guest->table->name }}</p>
                                 @endif
