@@ -213,10 +213,30 @@ class GuestController extends Controller
             ->with('bulk_errors', $errors);
     }
 
-    protected function validateData(Request $request): array
+    protected function validateData(Request $request, ?int $guestId = null): array
     {
         $validated = $request->validate([
-            'reception_table_id' => ['required', 'exists:reception_tables,id'],
+            'reception_table_id' => [
+                'required',
+                'exists:reception_tables,id',
+                function ($attribute, $value, $fail) use ($guestId) {
+                    // Vérifier si la table a déjà 10 invités
+                    $table = ReceptionTable::find($value);
+                    if ($table) {
+                        $guestCount = Guest::where('reception_table_id', $value)
+                            ->whereNull('deleted_at')
+                            ->when($guestId, function ($query) use ($guestId) {
+                                // Exclure l'invité actuel du comptage si on est en mode édition
+                                $query->where('id', '!=', $guestId);
+                            })
+                            ->count();
+
+                        if ($guestCount >= 10) {
+                            $fail('Cette table a déjà atteint sa capacité maximale de 10 invités.');
+                        }
+                    }
+                },
+            ],
             'type' => ['required', 'in:solo,couple'],
             'primary_first_name' => ['required', 'string', 'max:255'],
             'phone' => [
@@ -439,18 +459,34 @@ class GuestController extends Controller
                 if (! empty($tableName)) {
                     $table = $tables->firstWhere('name', $tableName);
                     if ($table) {
+                        // Vérifier si la table a déjà 10 invités
+                        $guestCount = Guest::where('reception_table_id', $table->id)
+                            ->whereNull('deleted_at')
+                            ->count();
+
+                        if ($guestCount >= 10) {
+                            $errors[] = "Ligne {$lineNumber}: La table '{$tableName}' a déjà atteint sa capacité maximale de 10 invités";
+                            continue;
+                        }
+
                         $tableId = $table->id;
                     } else {
                         $errors[] = "Ligne {$lineNumber}: Table '{$tableName}' introuvable";
                         continue;
                     }
                 } else {
-                    // Si aucune table n'est spécifiée, utiliser la première table disponible ou générer une erreur
-                    $firstTable = $tables->first();
-                    if ($firstTable) {
-                        $tableId = $firstTable->id;
+                    // Si aucune table n'est spécifiée, utiliser la première table disponible (avec moins de 10 invités)
+                    $availableTable = $tables->first(function ($table) {
+                        $guestCount = Guest::where('reception_table_id', $table->id)
+                            ->whereNull('deleted_at')
+                            ->count();
+                        return $guestCount < 10;
+                    });
+
+                    if ($availableTable) {
+                        $tableId = $availableTable->id;
                     } else {
-                        $errors[] = "Ligne {$lineNumber}: Aucune table disponible dans le système";
+                        $errors[] = "Ligne {$lineNumber}: Aucune table disponible (toutes les tables ont atteint leur capacité maximale de 10 invités)";
                         continue;
                     }
                 }
@@ -494,10 +530,32 @@ class GuestController extends Controller
         }
     }
 
-    protected function availableTables()
+    /**
+     * Récupère les tables disponibles (qui ont moins de 10 invités).
+     *
+     * @param int|null $currentTableId ID de la table actuelle (pour l'édition, permet de garder la table même si elle est pleine)
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    protected function availableTables(?int $currentTableId = null)
     {
-        return ReceptionTable::withTrashed()
+        $maxGuestsPerTable = 10;
+
+        // Récupérer toutes les tables avec le nombre d'invités actifs
+        $tables = ReceptionTable::withTrashed()
+            ->withCount(['guests' => function ($query) {
+                $query->whereNull('deleted_at');
+            }])
             ->orderBy('name')
             ->get();
+
+        // Filtrer les tables qui ont moins de 10 invités, ou la table actuelle si on est en mode édition
+        return $tables->filter(function ($table) use ($maxGuestsPerTable, $currentTableId) {
+            // Toujours inclure la table actuelle si on est en mode édition
+            if ($currentTableId && $table->id === $currentTableId) {
+                return true;
+            }
+            // Sinon, inclure seulement les tables avec moins de 10 invités
+            return $table->guests_count < $maxGuestsPerTable;
+        });
     }
 }

@@ -46,10 +46,20 @@
                             <select class="form-select" id="reception_table_id" name="reception_table_id" required>
                                 <option value="">Sélectionnez une table</option>
                                 @foreach ($tables as $tableOption)
+                                    @php
+                                        $guestCount = $tableOption->guests_count ?? 0;
+                                        $remaining = 10 - $guestCount;
+                                    @endphp
                                     <option value="{{ $tableOption->id }}" @selected(old('reception_table_id', $guest->reception_table_id) == $tableOption->id)>
                                         {{ $tableOption->name }}
+                                        ({{ $guestCount }}/10 invités
+                                        @if ($remaining > 0)
+                                            - {{ $remaining }} place{{ $remaining > 1 ? 's' : '' }} disponible{{ $remaining > 1 ? 's' : '' }})
+                                        @else
+                                            - Pleine)
+                                        @endif
                                         @if ($tableOption->trashed())
-                                            (Archivée)
+                                            - Archivée
                                         @endif
                                     </option>
                                 @endforeach
