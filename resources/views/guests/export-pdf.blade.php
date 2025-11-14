@@ -40,6 +40,10 @@
         .name {
             width: auto;
         }
+        .type {
+            width: 100px;
+            text-align: center;
+        }
         .table-name {
             width: 200px;
         }
@@ -53,6 +57,7 @@
             <tr>
                 <th class="number">N°</th>
                 <th class="name">Nom de l'invité</th>
+                <th class="type">Type</th>
                 <th class="table-name">Table</th>
             </tr>
         </thead>
@@ -61,6 +66,7 @@
                 <tr>
                     <td class="number">{{ $index + 1 }}</td>
                     <td class="name">{{ $guest->display_name }}</td>
+                    <td class="type">{{ $guest->type === 'couple' ? 'Couple' : 'Solo' }}</td>
                     <td class="table-name">{{ $guest->table ? $guest->table->name : 'Non assigné' }}</td>
                 </tr>
             @endforeach
