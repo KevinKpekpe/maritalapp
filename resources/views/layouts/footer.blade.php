@@ -2,7 +2,7 @@
 <footer class="pc-footer">
     <div class="footer-wrapper container-fluid">
         <div class="row">
-            <div class="col-sm my-1">
+            <div class="col-sm my-1 text-center">
                 <p class="m-0">Conçu et developpé par <span class="text-primary"></span> 💻👻.</p>
                 <p> Tous droits reservés.</p>
             </div>
