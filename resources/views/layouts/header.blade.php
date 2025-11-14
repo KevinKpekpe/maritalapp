@@ -42,7 +42,7 @@
         <div class="navbar-wrapper">
             <div class="m-header">
                 <a href="{{ url('/') }}" class="b-brand text-primary">
-                    <img src="{{ asset('assets/images/logo-dark.svg') }}" class="img-fluid logo-lg" alt="logo">
+                    <img src="{{ asset('assets/images/marital.png') }}" class="img-fluid logo-lg" alt="logo">
                 </a>
             </div>
             <div class="navbar-content">
@@ -126,16 +126,16 @@
                             </form>
                         </div>
                     </li>
-                    <li class="pc-h-item d-none d-md-inline-flex">
+                    {{-- <li class="pc-h-item d-none d-md-inline-flex">
                         <form class="header-search">
                             <i data-feather="search" class="icon-search"></i>
                             <input type="search" class="form-control" placeholder="Search here. . .">
                         </form>
-                    </li>
+                    </li> --}}
                 </ul>
             </div>
             <!-- [Mobile Media Block end] -->
-            <div class="ms-auto">
+            {{-- <div class="ms-auto">
                 <ul class="list-unstyled">
                     <li class="dropdown pc-h-item">
                         <a class="pc-head-link dropdown-toggle arrow-none me-0" data-bs-toggle="dropdown"
@@ -260,7 +260,7 @@
                         </div>
                     </li>
                 </ul>
-            </div>
+            </div> --}}
         </div>
     </header>
     <!-- [ Header ] end -->
