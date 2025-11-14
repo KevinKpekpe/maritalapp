@@ -40,7 +40,7 @@ class UltraMsgService
 
         $invitationUrl = route('invitations.show', $guest->invitation_token);
 
-        $message = $this->buildMessage($guest->display_name, $invitationUrl);
+        $message = $this->buildMessage($guest->display_name, $guest->type, $invitationUrl);
 
         $response = $this->getClient()->sendChatMessage($phone, $message);
 
@@ -65,15 +65,16 @@ class UltraMsgService
         ];
     }
 
-    protected function buildMessage(string $guestName, string $invitationUrl): string
+    protected function buildMessage(string $guestName, ?string $guestType = '', string $invitationUrl): string
     {
         return implode("\n", [
-            "🎉 Bonjour {$guestName} !",
+            "🎉 Bonjour {$guestType}{$guestName} !",
             "",
-            "Nous avons le plaisir de vous inviter au mariage de Raphael & Daniella.",
+            "Nous avons le plaisir de vous inviter au mariage de Raphaël & Daniella.",
             "",
             "👇 Cliquez sur le lien ci-dessous pour confirmer votre présence et retrouver tous les détails :",
-            "🔗 {$invitationUrl}",
+            "",
+            $invitationUrl,
             "",
             "Dress code : All black 🖤",
         ]);
@@ -200,4 +201,3 @@ class UltraMsgService
         return $this->client;
     }
 }
-
