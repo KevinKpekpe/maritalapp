@@ -42,7 +42,7 @@ class UltraMsgService
 
         $message = $this->buildMessage($guest->display_name, $guest->type, $invitationUrl);
 
-        $response = $this->getClient()->sendLinkMessage($phone, $message);
+        $response = $this->getClient()->sendChatMessage($phone, $message);
 
         $sent = ! empty($response['sent']) || ! empty($response['id']);
 
