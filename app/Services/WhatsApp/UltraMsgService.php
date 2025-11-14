@@ -68,7 +68,7 @@ class UltraMsgService
     protected function buildMessage(string $guestName, ?string $guestType = '', string $invitationUrl): string
     {
         return implode("\n", [
-            "🎉 Bonjour {$guestType}{$guestName} !",
+            "🎉 Bonjour {$guestType} {$guestName} !",
             "",
             "Nous avons le plaisir de vous inviter au mariage de Raphaël & Daniella.",
             "",
