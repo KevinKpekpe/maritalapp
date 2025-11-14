@@ -43,7 +43,7 @@
         <div class="navbar-wrapper">
             <div class="m-header">
                 <a href="{{ url('/') }}" class="b-brand text-primary">
-                    <img src="{{ asset('assets/images/marital.png') }}" class="img-fluid logo-lg" alt="logo">
+                    <img src="{{ asset('assets/images/marital-transparent.png') }}" class="img-fluid logo-lg" alt="logo" style="max-height: 50px;">
                 </a>
             </div>
             <div class="navbar-content">
