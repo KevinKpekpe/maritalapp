@@ -62,6 +62,42 @@
                     </div>
                 @endif
 
+                <div class="row g-3 mb-4" id="guest-filters">
+                    <div class="col-12 col-md-3">
+                        <label for="filter-rsvp-status" class="form-label mb-1">Statut RSVP</label>
+                        <select name="rsvp_status" id="filter-rsvp-status" class="form-select">
+                            <option value="">Tous les statuts</option>
+                            <option value="not_confirmed">Non confirmés</option>
+                            <option value="confirmed">Confirmés</option>
+                            <option value="declined">Déclinés</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label for="filter-whatsapp-status" class="form-label mb-1">Lien WhatsApp</label>
+                        <select name="whatsapp_status" id="filter-whatsapp-status" class="form-select">
+                            <option value="">Tous les invités</option>
+                            <option value="not_sent">Lien non envoyé</option>
+                            <option value="sent">Lien envoyé</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label for="filter-guest-type" class="form-label mb-1">Type d'invité</label>
+                        <select name="guest_type" id="filter-guest-type" class="form-select">
+                            <option value="">Tous les types</option>
+                            <option value="solo">Solo</option>
+                            <option value="couple">Couple</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label for="filter-sort" class="form-label mb-1">Tri</label>
+                        <select name="sort" id="filter-sort" class="form-select">
+                            <option value="recent" selected>Du plus récent au plus ancien</option>
+                            <option value="oldest">Du plus ancien au plus récent</option>
+                            <option value="">Tri alphabétique</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div id="guest-table-container">
                     @include('guests.partials.table', ['guests' => $guests])
                 </div>
@@ -77,6 +113,8 @@
         const searchInput = document.getElementById('guest-search');
         const resultsContainer = document.getElementById('guest-table-container');
         const loader = document.getElementById('guest-search-loader');
+        const filtersForm = document.getElementById('guest-filters');
+        const filterInputs = filtersForm ? filtersForm.querySelectorAll('select') : [];
         const endpoint = '{{ route('guests.search') }}';
         let debounceTimer = null;
         let activeController = null;
@@ -87,7 +125,7 @@
             loader.classList.toggle('d-none', !visible);
         }
 
-        function fetchGuests(query) {
+        function fetchGuests() {
             if (activeController) {
                 activeController.abort();
             }
@@ -95,9 +133,16 @@
             const signal = activeController.signal;
 
             const url = new URL(endpoint, window.location.origin);
+            const query = searchInput ? searchInput.value.trim() : '';
             if (query) {
                 url.searchParams.set('query', query);
             }
+
+            filterInputs.forEach(select => {
+                if (select.value) {
+                    url.searchParams.set(select.name, select.value);
+                }
+            });
 
             toggleLoader(true);
 
@@ -263,10 +308,16 @@
 
                 clearTimeout(debounceTimer);
                 debounceTimer = setTimeout(() => {
-                    fetchGuests(query);
+                    fetchGuests();
                 }, 300);
             });
         }
+
+        filterInputs.forEach(select => {
+            select.addEventListener('change', () => {
+                fetchGuests();
+            });
+        });
 
         // Initialiser les handlers au chargement de la page
         initSelectionHandlers();

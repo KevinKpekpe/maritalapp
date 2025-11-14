@@ -20,7 +20,7 @@ class GuestController extends Controller
     {
         $guests = Guest::with(['table' => fn ($query) => $query->withTrashed()])
             ->withTrashed()
-            ->orderBy('primary_first_name')
+            ->orderByDesc('created_at')
             ->get();
 
         $breadcrumbs = [
@@ -49,7 +49,38 @@ class GuestController extends Controller
             });
         }
 
-        $guests = $guestsQuery->orderBy('primary_first_name')->get();
+        $statusFilter = $request->string('rsvp_status')->value();
+        if ($statusFilter === 'not_confirmed') {
+            $guestsQuery->where(function ($subQuery) {
+                $subQuery->whereNull('rsvp_status')
+                    ->orWhere('rsvp_status', 'pending');
+            });
+        } elseif (in_array($statusFilter, ['confirmed', 'declined'], true)) {
+            $guestsQuery->where('rsvp_status', $statusFilter);
+        }
+
+        $whatsappFilter = $request->string('whatsapp_status')->value();
+        if ($whatsappFilter === 'not_sent') {
+            $guestsQuery->whereNull('whatsapp_sent_at');
+        } elseif ($whatsappFilter === 'sent') {
+            $guestsQuery->whereNotNull('whatsapp_sent_at');
+        }
+
+        $typeFilter = $request->string('guest_type')->value();
+        if (in_array($typeFilter, ['solo', 'couple'], true)) {
+            $guestsQuery->where('type', $typeFilter);
+        }
+
+        $sort = $request->string('sort')->value();
+        if ($sort === 'recent') {
+            $guestsQuery->orderByDesc('created_at');
+        } elseif ($sort === 'oldest') {
+            $guestsQuery->orderBy('created_at');
+        } else {
+            $guestsQuery->orderBy('primary_first_name');
+        }
+
+        $guests = $guestsQuery->get();
 
         $html = view('guests.partials.table', ['guests' => $guests])->render();
 
