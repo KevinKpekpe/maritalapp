@@ -42,7 +42,8 @@ class UltraMsgService
 
         $message = $this->buildMessage($guest->display_name, $guest->type, $invitationUrl);
 
-        $response = $this->getClient()->sendChatMessage($phone, $message);
+        $response = $this->getClient()->sendLinkMessage($phone, $message);
+        $response = $this->getClient()->sendLinkMessage($phone, $invitationUrl);
 
         $sent = ! empty($response['sent']) || ! empty($response['id']);
 
@@ -72,11 +73,9 @@ class UltraMsgService
             "",
             "Nous avons le plaisir de vous inviter au mariage de Raphaël & Daniella.",
             "",
-            "👇 Cliquez sur le lien ci-dessous pour confirmer votre présence et retrouver tous les détails :",
-            "",
-            $invitationUrl,
-            "",
             "Dress code : All black 🖤",
+            "",
+            "👇 Cliquez sur le lien ci-dessous pour confirmer votre présence et retrouver tous les détails :",
         ]);
     }
 
