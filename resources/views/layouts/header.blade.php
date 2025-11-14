@@ -44,12 +44,13 @@
             <div class="m-header">
                 <a href="{{ url('/') }}" class="b-brand text-primary" style="text-decoration: none;">
                     <p style="
-                        font-family: 'Great Vibes', 'Dancing Script', cursive, 'Brush Script MT', fantasy, serif;
+                        font-family: 'Great Vibes',;
                         font-size: 1.5rem;
                         color: #b5824d;
                         letter-spacing: 2px;
                         text-shadow: 0 2px 8px #ecd9c6, 0 1px 0 #ffffff;
-                        margin: 2px;
+                        margin-top: 2px;
+                        margin-bottom:0px;
                         font-weight: 500;
                     ">
                         Marital APP
