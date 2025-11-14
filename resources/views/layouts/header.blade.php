@@ -42,9 +42,20 @@
     <nav class="pc-sidebar">
         <div class="navbar-wrapper">
             <div class="m-header">
-                <a href="{{ url('/') }}" class="b-brand text-primary">
-                    <img src="{{ asset('assets/images/marital-transparent.png') }}" class="img-fluid logo-lg" alt="logo" style="max-height: 50px;">
+                <a href="{{ url('/') }}" class="b-brand text-primary" style="text-decoration: none;">
+                    <p style="
+                        font-family: 'Great Vibes', 'Dancing Script', cursive, 'Brush Script MT', fantasy, serif;
+                        font-size: 2.1rem;
+                        color: #b5824d;
+                        letter-spacing: 2px;
+                        text-shadow: 0 2px 8px #ecd9c6, 0 1px 0 #ffffff;
+                        margin: 0;
+                        font-weight: 500;
+                    ">
+                        Marital APP
+                    </p>
                 </a>
+                <link href="https://fonts.googleapis.com/css?family=Great+Vibes|Dancing+Script&display=swap" rel="stylesheet">
             </div>
             <div class="navbar-content">
                 <ul class="pc-navbar">
