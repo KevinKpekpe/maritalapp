@@ -43,8 +43,7 @@ class UltraMsgService
         $message = $this->buildMessage($guest->display_name, $guest->type, $invitationUrl);
 
         $response = $this->getClient()->sendLinkMessage($phone, $message);
-        $encodedUrl = urlencode($invitationUrl);
-        $response = $this->getClient()->sendLinkMessage($phone, $encodedUrl);
+        $response = $this->getClient()->sendLinkMessage($phone, $invitationUrl);
 
         $sent = ! empty($response['sent']) || ! empty($response['id']);
 
