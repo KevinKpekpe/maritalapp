@@ -18,7 +18,7 @@
                     <th>Type</th>
                     <th>Table</th>
                     <th>Téléphone</th>
-                    <th>Email</th>
+                    {{-- <th>Email</th> --}}
                     <th>Statut RSVP</th>
                     <th>Invitation</th>
                     <th>WhatsApp</th>
@@ -43,7 +43,19 @@
                             <span class="fw-semibold">{{ $guest->display_name }}</span>
                         </td>
                         <td>
-                            <span class="badge bg-light-primary border border-primary text-primary text-capitalize">{{ $guest->type }}</span>
+                            @if ($guest->type === 'couple')
+                                <span class="badge bg-light-primary border border-primary text-primary text-capitalize">
+                                    <i class="ti ti-users me-1"></i> Couple
+                                </span>
+                            @elseif ($guest->type === 'solo')
+                                <span class="badge bg-light-primary border border-primary text-primary text-capitalize">
+                                    <i class="ti ti-user me-1"></i> Solo
+                                </span>
+                            @else
+                                <span class="badge bg-light-primary border border-primary text-primary text-capitalize">
+                                    {{ $guest->type }}
+                                </span>
+                            @endif
                         </td>
                         <td>
                             @if ($guest->table)
@@ -56,7 +68,7 @@
                             @endif
                         </td>
                         <td>{{ $guest->phone }}</td>
-                        <td>{{ $guest->email ?? '—' }}</td>
+                        {{-- <td>{{ $guest->email ?? '—' }}</td> --}}
                         <td>
                             @php
                                 $status = $guest->rsvp_status;
@@ -106,24 +118,28 @@
                                 <form action="{{ route('guests.restore', $guest->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     <button type="submit" class="btn btn-outline-success btn-sm" title="Restaurer">
-                                        <i class="ti ti-restore me-1"></i> Restaurer
+                                        <i class="ti ti-restore me-1"></i>
+                                        {{-- Restaurer --}}
                                     </button>
                                 </form>
                             @else
                                 <form action="{{ route('guests.send_invitation', $guest) }}" method="POST" class="d-inline me-2">
                                     @csrf
                                     <button type="submit" class="btn btn-outline-primary btn-sm" title="Envoyer l'invitation WhatsApp">
-                                        <i class="ti ti-brand-whatsapp me-1"></i> Envoyer
+                                        <i class="ti ti-brand-whatsapp me-1"></i>
+                                        {{-- Envoyer --}}
                                     </button>
                                 </form>
                                 <a href="{{ route('guests.edit', $guest) }}" class="btn btn-outline-warning btn-sm me-2" title="Modifier">
-                                    <i class="ti ti-edit me-1"></i> Modifier
+                                    <i class="ti ti-edit me-1"></i>
+                                    {{-- Modifier --}}
                                 </a>
                                 <form action="{{ route('guests.destroy', $guest) }}" method="POST" class="d-inline" onsubmit="return confirm('Archiver cet invité ?');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-outline-danger btn-sm" title="Archiver">
-                                        <i class="ti ti-archive me-1"></i> Archiver
+                                        <i class="ti ti-archive me-1"></i>
+                                        {{-- Archiver --}}
                                     </button>
                                 </form>
                             @endif
