@@ -42,8 +42,7 @@ class UltraMsgService
 
         $message = $this->buildMessage($guest->display_name, $guest->type, $invitationUrl);
 
-        $response = $this->getClient()->sendLinkMessage($phone, $message);
-        $response = $this->getClient()->sendLinkMessage($phone, $invitationUrl);
+        $response = $this->getClient()->sendChatMessage($phone, $message);
 
         $sent = ! empty($response['sent']) || ! empty($response['id']);
 
@@ -76,6 +75,7 @@ class UltraMsgService
             "Dress code : All black 🖤",
             "",
             "👇 Cliquez sur le lien ci-dessous pour confirmer votre présence et retrouver tous les détails :",
+            $invitationUrl,
         ]);
     }
 
