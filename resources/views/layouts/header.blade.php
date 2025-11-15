@@ -16,7 +16,8 @@
     <link rel="icon" href="{{ asset('assets/images/favicon.svg') }}" type="image/x-icon">
 
     <!-- [Google Font] -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap">
 
     <!-- [Icons] -->
     <link rel="stylesheet" href="{{ asset('assets/fonts/tabler-icons.min.css') }}">
@@ -41,9 +42,21 @@
     <nav class="pc-sidebar">
         <div class="navbar-wrapper">
             <div class="m-header">
-                <a href="{{ url('/') }}" class="b-brand text-primary">
-                    <img src="{{ asset('assets/images/logo-dark.svg') }}" class="img-fluid logo-lg" alt="logo">
+                <a href="{{ url('/') }}" class="b-brand text-primary" style="text-decoration: none;">
+                    <p style="
+                        font-family: 'Great Vibes',;
+                        font-size: 1.5rem;
+                        color: #b5824d;
+                        letter-spacing: 2px;
+                        text-shadow: 0 2px 8px #ecd9c6, 0 1px 0 #ffffff;
+                        margin-top: 2px;
+                        margin-bottom:0px;
+                        font-weight: 500;
+                    ">
+                        Marital APP
+                    </p>
                 </a>
+                <link href="https://fonts.googleapis.com/css?family=Great+Vibes|Dancing+Script&display=swap" rel="stylesheet">
             </div>
             <div class="navbar-content">
                 <ul class="pc-navbar">
@@ -112,8 +125,8 @@
                         </a>
                     </li>
                     <li class="dropdown pc-h-item d-inline-flex d-md-none">
-                        <a class="pc-head-link dropdown-toggle arrow-none m-0" data-bs-toggle="dropdown"
-                            href="#" role="button" aria-haspopup="false" aria-expanded="false">
+                        <a class="pc-head-link dropdown-toggle arrow-none m-0" data-bs-toggle="dropdown" href="#"
+                            role="button" aria-haspopup="false" aria-expanded="false">
                             <i class="ti ti-search"></i>
                         </a>
                         <div class="dropdown-menu pc-h-dropdown drp-search">
@@ -126,99 +139,23 @@
                             </form>
                         </div>
                     </li>
-                    <li class="pc-h-item d-none d-md-inline-flex">
+                    {{-- <li class="pc-h-item d-none d-md-inline-flex">
                         <form class="header-search">
                             <i data-feather="search" class="icon-search"></i>
                             <input type="search" class="form-control" placeholder="Search here. . .">
                         </form>
-                    </li>
+                    </li> --}}
                 </ul>
             </div>
             <!-- [Mobile Media Block end] -->
             <div class="ms-auto">
                 <ul class="list-unstyled">
-                    <li class="dropdown pc-h-item">
-                        <a class="pc-head-link dropdown-toggle arrow-none me-0" data-bs-toggle="dropdown"
-                            href="#" role="button" aria-haspopup="false" aria-expanded="false">
-                            <i class="ti ti-mail"></i>
-                        </a>
-                        <div class="dropdown-menu dropdown-notification dropdown-menu-end pc-h-dropdown">
-                            <div class="dropdown-header d-flex align-items-center justify-content-between">
-                                <h5 class="m-0">Message</h5>
-                                <a href="#!" class="pc-head-link bg-transparent"><i
-                                        class="ti ti-x text-danger"></i></a>
-                            </div>
-                            <div class="dropdown-divider"></div>
-                            <div class="dropdown-header px-0 text-wrap header-notification-scroll position-relative"
-                                style="max-height: calc(100vh - 215px)">
-                                <div class="list-group list-group-flush w-100">
-                                    <a class="list-group-item list-group-item-action">
-                                        <div class="d-flex">
-                                            <div class="flex-shrink-0">
-                                                <img src="./assets/images/user/avatar-2.jpg" alt="user-image"
-                                                    class="user-avtar">
-                                            </div>
-                                            <div class="flex-grow-1 ms-1">
-                                                <span class="float-end text-muted">3:00 AM</span>
-                                                <p class="text-body mb-1">It's <b>Cristina danny's</b> birthday today.
-                                                </p>
-                                                <span class="text-muted">2 min ago</span>
-                                            </div>
-                                        </div>
-                                    </a>
-                                    <a class="list-group-item list-group-item-action">
-                                        <div class="d-flex">
-                                            <div class="flex-shrink-0">
-                                                <img src="./assets/images/user/avatar-1.jpg" alt="user-image"
-                                                    class="user-avtar">
-                                            </div>
-                                            <div class="flex-grow-1 ms-1">
-                                                <span class="float-end text-muted">6:00 PM</span>
-                                                <p class="text-body mb-1"><b>Aida Burg</b> commented your post.</p>
-                                                <span class="text-muted">5 August</span>
-                                            </div>
-                                        </div>
-                                    </a>
-                                    <a class="list-group-item list-group-item-action">
-                                        <div class="d-flex">
-                                            <div class="flex-shrink-0">
-                                                <img src="./assets/images/user/avatar-3.jpg" alt="user-image"
-                                                    class="user-avtar">
-                                            </div>
-                                            <div class="flex-grow-1 ms-1">
-                                                <span class="float-end text-muted">2:45 PM</span>
-                                                <p class="text-body mb-1"><b>There was a failure to your setup.</b></p>
-                                                <span class="text-muted">7 hours ago</span>
-                                            </div>
-                                        </div>
-                                    </a>
-                                    <a class="list-group-item list-group-item-action">
-                                        <div class="d-flex">
-                                            <div class="flex-shrink-0">
-                                                <img src="./assets/images/user/avatar-4.jpg" alt="user-image"
-                                                    class="user-avtar">
-                                            </div>
-                                            <div class="flex-grow-1 ms-1">
-                                                <span class="float-end text-muted">9:10 PM</span>
-                                                <p class="text-body mb-1"><b>Cristina Danny </b> invited to join <b>
-                                                        Meeting.</b></p>
-                                                <span class="text-muted">Daily scrum meeting time</span>
-                                            </div>
-                                        </div>
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="dropdown-divider"></div>
-                            <div class="text-center py-2">
-                                <a href="#!" class="link-primary">View all</a>
-                            </div>
-                        </div>
-                    </li>
                     <li class="dropdown pc-h-item header-user-profile">
                         <a class="pc-head-link dropdown-toggle arrow-none me-0" data-bs-toggle="dropdown"
                             href="#" role="button" aria-haspopup="false" data-bs-auto-close="outside"
                             aria-expanded="false">
-                            <img src="{{ asset('assets/images/user/avatar-2.jpg') }}" alt="user-image" class="user-avtar">
+                            <img src="{{ asset('assets/images/user/avatar-2.jpg') }}" alt="user-image"
+                                class="user-avtar">
                             <span>{{ Auth::user()->name ?? 'Utilisateur' }}</span>
                         </a>
                         <div class="dropdown-menu dropdown-user-profile dropdown-menu-end pc-h-dropdown">
@@ -278,13 +215,15 @@
                                 <h5 class="m-b-10">{{ $pageTitle ?? 'Dashboard' }}</h5>
                             </div>
                             <ul class="breadcrumb">
-                                @if(isset($breadcrumbs) && is_array($breadcrumbs) && count($breadcrumbs) > 0)
-                                    @foreach($breadcrumbs as $index => $breadcrumb)
-                                        @if($index === count($breadcrumbs) - 1)
-                                            <li class="breadcrumb-item" aria-current="page">{{ $breadcrumb['label'] }}</li>
+                                @if (isset($breadcrumbs) && is_array($breadcrumbs) && count($breadcrumbs) > 0)
+                                    @foreach ($breadcrumbs as $index => $breadcrumb)
+                                        @if ($index === count($breadcrumbs) - 1)
+                                            <li class="breadcrumb-item" aria-current="page">
+                                                {{ $breadcrumb['label'] }}</li>
                                         @else
                                             <li class="breadcrumb-item">
-                                                <a href="{{ $breadcrumb['url'] ?? '#' }}">{{ $breadcrumb['label'] }}</a>
+                                                <a
+                                                    href="{{ $breadcrumb['url'] ?? '#' }}">{{ $breadcrumb['label'] }}</a>
                                             </li>
                                         @endif
                                     @endforeach

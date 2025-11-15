@@ -2,16 +2,17 @@
 <footer class="pc-footer">
     <div class="footer-wrapper container-fluid">
         <div class="row">
-            <div class="col-sm my-1">
-                <p class="m-0">MaritalApp Dashboard &#9829; crafted by SpectreCoding 💻👻. All rights reserved.</p>
+            <div class="col-sm my-1 text-center">
+                <p class="m-0">Conçu et developpé par <span class="text-primary">Spectre Coding</span> 💻👻.</p>
+                <p> Tous droits reservés.</p>
             </div>
-            <div class="col-auto my-1">
+            {{-- <div class="col-auto my-1">
                 <ul class="list-inline footer-link mb-0">
                     <li class="list-inline-item"><a href="{{ url('/') }}">Home</a></li>
                     <li class="list-inline-item"><a href="">Contact</a></li>
                     <li class="list-inline-item"><a href="">About</a></li>
                 </ul>
-            </div>
+            </div> --}}
         </div>
     </div>
 </footer>
