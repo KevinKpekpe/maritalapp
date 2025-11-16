@@ -4,10 +4,10 @@
     <div class="col-12">
         <div class="card table-card">
             <div class="card-header">
-                <div class="d-sm-flex align-items-center justify-content-between flex-wrap gap-2">
-                    <h5 class="mb-3 mb-sm-0">Liste des tables</h5>
-                    <div class="d-flex flex-wrap gap-2 align-items-center">
-                        <div class="input-group table-search-group">
+                <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+                    <h5 class="mb-0">Liste des tables</h5>
+                    <div class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 w-100 w-md-auto">
+                        <div class="input-group table-search-group grow" style="min-width: 250px; max-width: 500px;">
                             <span class="input-group-text bg-white border-end-0"><i class="ti ti-search"></i></span>
                             <input type="search" id="table-search" class="form-control border-start-0"
                                 placeholder="Rechercher une table (nom, description)..." autocomplete="off">
@@ -15,15 +15,20 @@
                                 <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
                             </span>
                         </div>
-                        <a href="{{ route('tables.export') }}" class="btn btn-outline-success">
-                            <i class="ti ti-download me-2"></i> Exporter
-                        </a>
-                        <a href="{{ route('tables.import.show') }}" class="btn btn-outline-info">
-                            <i class="ti ti-upload me-2"></i> Importer
-                        </a>
-                        <a href="{{ route('tables.create') }}" class="btn btn-primary">
-                            <i class="ti ti-layout-grid-add me-2"></i> Ajouter une table
-                        </a>
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            <a href="{{ route('tables.trash') }}" class="btn btn-outline-secondary" title="Corbeille">
+                                <i class="ti ti-trash"></i>
+                            </a>
+                            <a href="{{ route('tables.export') }}" class="btn btn-outline-success" title="Exporter">
+                                <i class="ti ti-download"></i>
+                            </a>
+                            <a href="{{ route('tables.import.show') }}" class="btn btn-outline-info" title="Importer">
+                                <i class="ti ti-upload"></i>
+                            </a>
+                            <a href="{{ route('tables.create') }}" class="btn btn-primary" title="Ajouter une table">
+                                <i class="ti ti-layout-grid-add"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

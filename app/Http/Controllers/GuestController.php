@@ -21,7 +21,7 @@ class GuestController extends Controller
     public function index(): View
     {
         $guests = Guest::with(['table' => fn ($query) => $query->withTrashed()])
-            ->withTrashed()
+            ->whereNull('deleted_at')
             ->orderByDesc('created_at')
             ->get();
 
@@ -33,12 +33,31 @@ class GuestController extends Controller
         return view('guests.index', compact('guests', 'breadcrumbs'))->with('pageTitle', 'Invités');
     }
 
+    /**
+     * Affiche la corbeille (éléments archivés).
+     */
+    public function trash(): View
+    {
+        $guests = Guest::with(['table' => fn ($query) => $query->withTrashed()])
+            ->onlyTrashed()
+            ->orderByDesc('deleted_at')
+            ->get();
+
+        $breadcrumbs = [
+            ['label' => 'Accueil', 'url' => url('/')],
+            ['label' => 'Invités', 'url' => route('guests.index')],
+            ['label' => 'Corbeille', 'url' => route('guests.trash')],
+        ];
+
+        return view('guests.trash', compact('guests', 'breadcrumbs'))->with('pageTitle', 'Corbeille - Invités');
+    }
+
     public function search(Request $request): JsonResponse
     {
         $query = trim((string) $request->get('query'));
 
         $guestsQuery = Guest::with(['table' => fn ($q) => $q->withTrashed()])
-            ->withTrashed();
+            ->whereNull('deleted_at');
 
         if ($query !== '') {
             $guestsQuery->where(function ($subQuery) use ($query) {
@@ -176,7 +195,23 @@ class GuestController extends Controller
         $guest = Guest::withTrashed()->findOrFail($id);
         $guest->restore();
 
-        return redirect()->route('guests.index')->with('status', 'Invité restauré.');
+        return redirect()->route('guests.trash')->with('status', 'Invité restauré.');
+    }
+
+    /**
+     * Supprime définitivement un invité (hard delete).
+     * Utilisé uniquement depuis la liste des invités archivés.
+     */
+    public function forceDelete(int $id): RedirectResponse
+    {
+        $guest = Guest::withTrashed()->findOrFail($id);
+
+        // Supprimer définitivement l'invité
+        $guest->forceDelete();
+
+        return redirect()
+            ->route('guests.trash')
+            ->with('status', 'Invité supprimé définitivement.');
     }
 
     public function sendInvitation(Request $request, Guest $guest, UltraMsgService $whatsAppService): RedirectResponse

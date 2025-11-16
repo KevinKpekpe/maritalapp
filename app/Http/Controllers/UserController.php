@@ -18,7 +18,7 @@ class UserController extends Controller
      */
     public function index(): View
     {
-        $users = User::withTrashed()
+        $users = User::whereNull('deleted_at')
             ->orderBy('name')
             ->get();
 
@@ -31,13 +31,31 @@ class UserController extends Controller
     }
 
     /**
+     * Affiche la corbeille (utilisateurs archivés).
+     */
+    public function trash(): View
+    {
+        $users = User::onlyTrashed()
+            ->orderByDesc('deleted_at')
+            ->get();
+
+        $breadcrumbs = [
+            ['label' => 'Accueil', 'url' => url('/')],
+            ['label' => 'Utilisateurs', 'url' => route('users.index')],
+            ['label' => 'Corbeille', 'url' => route('users.trash')],
+        ];
+
+        return view('users.trash', compact('users', 'breadcrumbs'))->with('pageTitle', 'Corbeille - Utilisateurs');
+    }
+
+    /**
      * Recherche d'utilisateurs.
      */
     public function search(Request $request): JsonResponse
     {
         $query = trim((string) $request->get('query'));
 
-        $usersQuery = User::withTrashed();
+        $usersQuery = User::whereNull('deleted_at');
 
         if ($query !== '') {
             $usersQuery->where(function ($subQuery) use ($query) {
@@ -142,7 +160,28 @@ class UserController extends Controller
         $user = User::withTrashed()->findOrFail($id);
         $user->restore();
 
-        return redirect()->route('users.index')->with('status', 'Utilisateur restauré.');
+        return redirect()->route('users.trash')->with('status', 'Utilisateur restauré.');
+    }
+
+    /**
+     * Supprime définitivement un utilisateur.
+     * Interdit pour l'utilisateur actuellement connecté.
+     */
+    public function forceDelete(int $id): RedirectResponse
+    {
+        $user = User::withTrashed()->findOrFail($id);
+
+        if (Auth::check() && $user->id === Auth::id()) {
+            return redirect()
+                ->route('users.trash')
+                ->with('error', 'Vous ne pouvez pas supprimer définitivement votre propre compte.');
+        }
+
+        $user->forceDelete();
+
+        return redirect()
+            ->route('users.trash')
+            ->with('status', 'Utilisateur supprimé définitivement.');
     }
 
     /**

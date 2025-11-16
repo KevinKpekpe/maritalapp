@@ -31,13 +31,13 @@
                         <td>{{ $beverage->created_at?->format('d/m/Y') }}</td>
                         <td class="text-end">
                             <a href="{{ route('beverages.edit', $beverage) }}" class="btn btn-outline-warning btn-sm me-2" title="Modifier">
-                                <i class="ti ti-edit me-1"></i> Modifier
+                                <i class="ti ti-edit"></i>
                             </a>
-                            <form action="{{ route('beverages.destroy', $beverage) }}" method="POST" class="d-inline" onsubmit="return confirm('Supprimer cette boisson ?');">
+                            <form action="{{ route('beverages.destroy', $beverage) }}" method="POST" class="d-inline" data-confirm="Supprimer cette boisson ?" data-confirm-options='{"title": "Supprimer la boisson", "message": "Êtes-vous sûr de vouloir supprimer cette boisson ? Cette action est irréversible.", "confirmText": "Supprimer", "confirmClass": "btn-danger", "icon": "ti-trash", "iconColor": "text-danger"}'>
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-outline-danger btn-sm" title="Supprimer">
-                                    <i class="ti ti-trash me-1"></i> Supprimer
+                                    <i class="ti ti-trash"></i>
                                 </button>
                             </form>
                         </td>

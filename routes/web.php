@@ -108,7 +108,9 @@ Route::middleware('auth.session')->group(function () {
     Route::get('guests/import/template', [GuestController::class, 'downloadTemplate'])->name('guests.import.template');
     Route::post('guests/import', [GuestController::class, 'import'])->name('guests.import');
     Route::resource('guests', GuestController::class)->except(['show']);
+    Route::get('guests/trash', [GuestController::class, 'trash'])->name('guests.trash');
     Route::post('guests/{id}/restore', [GuestController::class, 'restore'])->name('guests.restore');
+    Route::delete('guests/{id}/force-delete', [GuestController::class, 'forceDelete'])->name('guests.force-delete');
 
     Route::get('tables/search', [TableController::class, 'search'])->name('tables.search');
     Route::get('tables/export', [TableController::class, 'export'])->name('tables.export');
@@ -116,7 +118,9 @@ Route::middleware('auth.session')->group(function () {
     Route::get('tables/import/template', [TableController::class, 'downloadTemplate'])->name('tables.import.template');
     Route::post('tables/import', [TableController::class, 'import'])->name('tables.import');
     Route::resource('tables', TableController::class)->except(['show']);
+    Route::get('tables/trash', [TableController::class, 'trash'])->name('tables.trash');
     Route::post('tables/{id}/restore', [TableController::class, 'restore'])->name('tables.restore');
+    Route::delete('tables/{id}/force-delete', [TableController::class, 'forceDelete'])->name('tables.force-delete');
 
     Route::get('preferences/search', [PreferenceController::class, 'search'])->name('preferences.search');
     Route::get('preferences/export', [PreferenceController::class, 'export'])->name('preferences.export');
@@ -127,7 +131,9 @@ Route::middleware('auth.session')->group(function () {
 
     Route::get('users/search', [UserController::class, 'search'])->name('users.search');
     Route::resource('users', UserController::class)->except(['show']);
+    Route::get('users/trash', [UserController::class, 'trash'])->name('users.trash');
     Route::post('users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
+    Route::delete('users/{id}/force-delete', [UserController::class, 'forceDelete'])->name('users.force-delete');
 
     Route::get('/profile', [AuthController::class, 'showProfile'])->name('profile.show');
     Route::put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');

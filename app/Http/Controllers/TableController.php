@@ -18,7 +18,7 @@ class TableController extends Controller
      */
     public function index(): View
     {
-        $tables = ReceptionTable::withTrashed()
+        $tables = ReceptionTable::whereNull('deleted_at')
             ->orderBy('name')
             ->get();
 
@@ -30,11 +30,29 @@ class TableController extends Controller
         return view('tables.index', compact('tables', 'breadcrumbs'))->with('pageTitle', 'Tables');
     }
 
+    /**
+     * Affiche la corbeille (tables archivées).
+     */
+    public function trash(): View
+    {
+        $tables = ReceptionTable::onlyTrashed()
+            ->orderByDesc('deleted_at')
+            ->get();
+
+        $breadcrumbs = [
+            ['label' => 'Accueil', 'url' => url('/')],
+            ['label' => 'Tables', 'url' => route('tables.index')],
+            ['label' => 'Corbeille', 'url' => route('tables.trash')],
+        ];
+
+        return view('tables.trash', compact('tables', 'breadcrumbs'))->with('pageTitle', 'Corbeille - Tables');
+    }
+
     public function search(Request $request): JsonResponse
     {
         $query = trim((string) $request->get('query'));
 
-        $tablesQuery = ReceptionTable::withTrashed();
+        $tablesQuery = ReceptionTable::whereNull('deleted_at');
 
         if ($query !== '') {
             $tablesQuery->where(function ($subQuery) use ($query) {
@@ -128,7 +146,30 @@ class TableController extends Controller
         $table->restore();
         $table->update(['is_active' => true]);
 
-        return redirect()->route('tables.index')->with('status', 'Table restaurée.');
+        return redirect()->route('tables.trash')->with('status', 'Table restaurée.');
+    }
+
+    /**
+     * Supprime définitivement une table.
+     * On empêche la suppression si des invités (même archivés) sont encore liés.
+     */
+    public function forceDelete(int $id): RedirectResponse
+    {
+        $table = ReceptionTable::withTrashed()->findOrFail($id);
+
+        // Vérifier la présence d'invités liés (actifs ou archivés)
+        $hasGuests = $table->guests()->withTrashed()->exists();
+        if ($hasGuests) {
+            return redirect()
+                ->route('tables.trash')
+                ->with('error', 'Impossible de supprimer définitivement une table qui a encore des invités (même archivés).');
+        }
+
+        $table->forceDelete();
+
+        return redirect()
+            ->route('tables.trash')
+            ->with('status', 'Table supprimée définitivement.');
     }
 
     /**

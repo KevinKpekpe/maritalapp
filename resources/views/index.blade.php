@@ -5,11 +5,11 @@
     <div class="col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-body d-flex flex-wrap gap-3">
-                <a href="{{ url('/guests') }}" class="btn btn-light-primary">
-                    <i class="ti ti-users me-2"></i> Invités
+                <a href="{{ url('/guests') }}" class="btn btn-light-primary" title="Invités">
+                    <i class="ti ti-users"></i>
                 </a>
-                <a href="{{ url('/tables') }}" class="btn btn-light-warning">
-                    <i class="ti ti-table me-2"></i> Tables
+                <a href="{{ url('/tables') }}" class="btn btn-light-warning" title="Tables">
+                    <i class="ti ti-table"></i>
                 </a>
             </div>
         </div>

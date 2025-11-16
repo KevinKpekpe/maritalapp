@@ -15,8 +15,8 @@
                                 <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
                             </span>
                         </div>
-                        <a href="{{ route('beverages.create') }}" class="btn btn-primary">
-                            <i class="ti ti-circle-plus me-2"></i> Ajouter une boisson
+                        <a href="{{ route('beverages.create') }}" class="btn btn-primary" title="Ajouter une boisson">
+                            <i class="ti ti-circle-plus"></i>
                         </a>
                     </div>
                 </div>

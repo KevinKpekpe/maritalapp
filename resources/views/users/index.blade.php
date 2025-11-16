@@ -4,10 +4,10 @@
     <div class="col-12">
         <div class="card table-card">
             <div class="card-header">
-                <div class="d-sm-flex align-items-center justify-content-between flex-wrap gap-2">
-                    <h5 class="mb-3 mb-sm-0">Utilisateurs</h5>
-                    <div class="d-flex flex-wrap gap-2 align-items-center">
-                        <div class="input-group user-search-group">
+                <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+                    <h5 class="mb-0">Utilisateurs</h5>
+                    <div class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 w-100 w-md-auto">
+                        <div class="input-group user-search-group grow" style="min-width: 250px; max-width: 500px;">
                             <span class="input-group-text bg-white border-end-0"><i class="ti ti-search"></i></span>
                             <input type="search" id="user-search" class="form-control border-start-0"
                                 placeholder="Rechercher un utilisateur (nom, email)..." autocomplete="off">
@@ -15,9 +15,14 @@
                                 <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
                             </span>
                         </div>
-                        <a href="{{ route('users.create') }}" class="btn btn-primary">
-                            <i class="ti ti-user-plus me-2"></i> Ajouter un utilisateur
-                        </a>
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            <a href="{{ route('users.trash') }}" class="btn btn-outline-secondary" title="Corbeille">
+                                <i class="ti ti-trash"></i>
+                            </a>
+                            <a href="{{ route('users.create') }}" class="btn btn-primary" title="Ajouter un utilisateur">
+                                <i class="ti ti-user-plus"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

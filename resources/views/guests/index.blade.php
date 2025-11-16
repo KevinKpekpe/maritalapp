@@ -4,10 +4,10 @@
     <div class="col-12">
         <div class="card table-card">
             <div class="card-header">
-                <div class="d-sm-flex align-items-center justify-content-between flex-wrap gap-2">
-                    <h5 class="mb-3 mb-sm-0">Invités</h5>
-                    <div class="d-flex flex-wrap gap-2 align-items-center">
-                        <div class="input-group guest-search-group">
+                <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+                    <h5 class="mb-0">Invités</h5>
+                    <div class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 w-100 w-md-auto">
+                        <div class="input-group guest-search-group grow" style="min-width: 250px; max-width: 500px;">
                             <span class="input-group-text bg-white border-end-0"><i class="ti ti-search"></i></span>
                             <input type="search" id="guest-search" class="form-control border-start-0"
                                 placeholder="Rechercher un invité (nom, téléphone, email, table)..." autocomplete="off">
@@ -15,18 +15,23 @@
                                 <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
                             </span>
                         </div>
-                        <button type="button" id="send-selected-btn" class="btn btn-success d-none" disabled>
-                            <i class="ti ti-brand-whatsapp me-2"></i> Envoyer à la sélection (<span id="selected-count">0</span>)
-                        </button>
-                        <a href="{{ route('guests.export') }}" class="btn btn-outline-success">
-                            <i class="ti ti-download me-2"></i> Exporter
-                        </a>
-                        <a href="{{ route('guests.import.show') }}" class="btn btn-outline-info">
-                            <i class="ti ti-upload me-2"></i> Importer
-                        </a>
-                        <a href="{{ route('guests.create') }}" class="btn btn-primary">
-                            <i class="ti ti-user-plus me-2"></i> Ajouter un invité
-                        </a>
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            <a href="{{ route('guests.trash') }}" class="btn btn-outline-secondary" title="Corbeille">
+                                <i class="ti ti-trash"></i>
+                            </a>
+                            <button type="button" id="send-selected-btn" class="btn btn-success d-none" disabled title="Envoyer à la sélection">
+                                <i class="ti ti-brand-whatsapp"></i> <span id="selected-count">0</span>
+                            </button>
+                            <a href="{{ route('guests.export') }}" class="btn btn-outline-success" title="Exporter">
+                                <i class="ti ti-download"></i>
+                            </a>
+                            <a href="{{ route('guests.import.show') }}" class="btn btn-outline-info" title="Importer">
+                                <i class="ti ti-upload"></i>
+                            </a>
+                            <a href="{{ route('guests.create') }}" class="btn btn-primary" title="Ajouter un invité">
+                                <i class="ti ti-user-plus"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -62,9 +67,9 @@
                     </div>
                 @endif
 
-                <div class="row g-3 mb-4" id="guest-filters">
-                    <div class="col-12 col-md-3">
-                        <label for="filter-rsvp-status" class="form-label mb-1">Statut RSVP</label>
+                <div class="row g-4 mb-4" id="guest-filters">
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <label for="filter-rsvp-status" class="form-label mb-2">Statut RSVP</label>
                         <select name="rsvp_status" id="filter-rsvp-status" class="form-select">
                             <option value="">Tous les statuts</option>
                             <option value="not_confirmed">Non confirmés</option>
@@ -72,24 +77,24 @@
                             <option value="declined">Déclinés</option>
                         </select>
                     </div>
-                    <div class="col-12 col-md-3">
-                        <label for="filter-whatsapp-status" class="form-label mb-1">Lien WhatsApp</label>
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <label for="filter-whatsapp-status" class="form-label mb-2">Lien WhatsApp</label>
                         <select name="whatsapp_status" id="filter-whatsapp-status" class="form-select">
                             <option value="">Tous les invités</option>
                             <option value="not_sent">Lien non envoyé</option>
                             <option value="sent">Lien envoyé</option>
                         </select>
                     </div>
-                    <div class="col-12 col-md-3">
-                        <label for="filter-guest-type" class="form-label mb-1">Type d'invité</label>
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <label for="filter-guest-type" class="form-label mb-2">Type d'invité</label>
                         <select name="guest_type" id="filter-guest-type" class="form-select">
                             <option value="">Tous les types</option>
                             <option value="solo">Solo</option>
                             <option value="couple">Couple</option>
                         </select>
                     </div>
-                    <div class="col-12 col-md-3">
-                        <label for="filter-sort" class="form-label mb-1">Tri</label>
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <label for="filter-sort" class="form-label mb-2">Tri</label>
                         <select name="sort" id="filter-sort" class="form-select">
                             <option value="recent" selected>Du plus récent au plus ancien</option>
                             <option value="oldest">Du plus ancien au plus récent</option>
@@ -267,35 +272,77 @@
                         return;
                     }
 
-                    if (!confirm('Envoyer les invitations WhatsApp à ' + guestIds.length + ' invité(s) sélectionné(s) ?')) {
-                        return;
+                    const guestCount = guestIds.length;
+                    const guestText = guestCount > 1 ? 'invités' : 'invité';
+
+                    if (window.showConfirmModal) {
+                        window.showConfirmModal({
+                            title: 'Envoyer les invitations WhatsApp',
+                            message: `Êtes-vous sûr de vouloir envoyer les invitations WhatsApp à ${guestCount} ${guestText} sélectionné${guestCount > 1 ? 's' : ''} ?`,
+                            confirmText: 'Envoyer',
+                            confirmClass: 'btn-success',
+                            icon: 'ti-brand-whatsapp',
+                            iconColor: 'text-success',
+                            onSubmit: function() {
+                                // Désactiver le bouton pendant l'envoi
+                                sendBtn.disabled = true;
+                                sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Envoi en cours...';
+
+                                // Créer un formulaire et le soumettre
+                                const form = document.createElement('form');
+                                form.method = 'POST';
+                                form.action = '{{ route('guests.send_bulk_invitations') }}';
+
+                                const csrfToken = document.createElement('input');
+                                csrfToken.type = 'hidden';
+                                csrfToken.name = '_token';
+                                csrfToken.value = '{{ csrf_token() }}';
+                                form.appendChild(csrfToken);
+
+                                guestIds.forEach(id => {
+                                    const input = document.createElement('input');
+                                    input.type = 'hidden';
+                                    input.name = 'guest_ids[]';
+                                    input.value = id;
+                                    form.appendChild(input);
+                                });
+
+                                document.body.appendChild(form);
+                                form.submit();
+                            }
+                        });
+                    } else {
+                        // Fallback si le modal n'est pas disponible
+                        if (!confirm('Envoyer les invitations WhatsApp à ' + guestIds.length + ' invité(s) sélectionné(s) ?')) {
+                            return;
+                        }
+
+                        // Désactiver le bouton pendant l'envoi
+                        sendBtn.disabled = true;
+                        sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Envoi en cours...';
+
+                        // Créer un formulaire et le soumettre
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '{{ route('guests.send_bulk_invitations') }}';
+
+                        const csrfToken = document.createElement('input');
+                        csrfToken.type = 'hidden';
+                        csrfToken.name = '_token';
+                        csrfToken.value = '{{ csrf_token() }}';
+                        form.appendChild(csrfToken);
+
+                        guestIds.forEach(id => {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'guest_ids[]';
+                            input.value = id;
+                            form.appendChild(input);
+                        });
+
+                        document.body.appendChild(form);
+                        form.submit();
                     }
-
-                    // Désactiver le bouton pendant l'envoi
-                    sendBtn.disabled = true;
-                    sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Envoi en cours...';
-
-                    // Créer un formulaire et le soumettre
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = '{{ route('guests.send_bulk_invitations') }}';
-
-                    const csrfToken = document.createElement('input');
-                    csrfToken.type = 'hidden';
-                    csrfToken.name = '_token';
-                    csrfToken.value = '{{ csrf_token() }}';
-                    form.appendChild(csrfToken);
-
-                    guestIds.forEach(id => {
-                        const input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = 'guest_ids[]';
-                        input.value = id;
-                        form.appendChild(input);
-                    });
-
-                    document.body.appendChild(form);
-                    form.submit();
                 });
             }
 

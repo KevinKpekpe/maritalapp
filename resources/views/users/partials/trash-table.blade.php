@@ -1,15 +1,16 @@
 @if ($users->isEmpty())
     <div class="text-center text-muted py-5">
-        <i class="ti ti-users me-2"></i> Aucun utilisateur trouvé.
+        <i class="ti ti-trash me-2"></i> Aucun utilisateur archivé.
     </div>
 @else
     <div class="table-responsive">
-        <table class="table table-hover align-middle" id="users-dt">
+        <table class="table table-hover align-middle">
             <thead>
                 <tr>
                     <th>Nom</th>
                     <th>Email</th>
                     <th>Créé le</th>
+                    <th>Archivé le</th>
                     <th class="text-end">Actions</th>
                 </tr>
             </thead>
@@ -25,24 +26,24 @@
                                 </div>
                                 <div>
                                     {{ $user->name }}
-                                    @if ($user->id === auth()->id())
-                                        <span class="badge bg-light-info border border-info text-info ms-2">Vous</span>
-                                    @endif
                                 </div>
                             </div>
                         </td>
                         <td>{{ $user->email }}</td>
                         <td>{{ $user->created_at?->format('d/m/Y') }}</td>
+                        <td>{{ $user->deleted_at?->format('d/m/Y H:i') ?? '—' }}</td>
                         <td class="text-end">
-                            <a href="{{ route('users.edit', $user) }}" class="btn btn-outline-warning btn-sm me-2" title="Modifier">
-                                <i class="ti ti-edit"></i>
-                            </a>
-                            <form action="{{ route('users.destroy', $user) }}" method="POST" class="d-inline" data-confirm="Archiver cet utilisateur ?" data-confirm-options='{"title": "Archiver l&#39;utilisateur", "message": "Êtes-vous sûr de vouloir archiver cet utilisateur ? Il sera déplacé dans la corbeille.", "confirmText": "Archiver", "confirmClass": "btn-warning", "icon": "ti-archive", "iconColor": "text-warning"}'>
+                            <form action="{{ route('users.restore', $user->id) }}" method="POST" class="d-inline me-1">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-success btn-sm" title="Restaurer">
+                                    <i class="ti ti-arrow-back-up"></i>
+                                </button>
+                            </form>
+                            <form action="{{ route('users.force-delete', $user->id) }}" method="POST" class="d-inline" data-confirm="Supprimer définitivement cet utilisateur ?" data-confirm-options='{"title": "Suppression définitive", "message": "Êtes-vous sûr de vouloir supprimer définitivement cet utilisateur ? Cette action est irréversible et toutes les données associées seront perdues.", "confirmText": "Supprimer définitivement", "confirmClass": "btn-danger", "icon": "ti-alert-triangle", "iconColor": "text-danger"}'>
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Archiver"
-                                    @if ($user->id === auth()->id()) disabled title="Vous ne pouvez pas supprimer votre propre compte" @endif>
-                                    <i class="ti ti-archive"></i>
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Supprimer définitivement">
+                                    <i class="ti ti-trash"></i>
                                 </button>
                             </form>
                         </td>

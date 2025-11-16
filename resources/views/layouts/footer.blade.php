@@ -31,6 +31,126 @@
 <script src="{{ asset('assets/js/pcoded.js') }}"></script>
 <script src="{{ asset('assets/js/plugins/feather.min.js') }}"></script>
 
+<!-- Modal de confirmation -->
+<script>
+(function() {
+    // Attendre que le DOM et Bootstrap soient chargés
+    function initConfirmModal() {
+        const confirmModal = document.getElementById('confirmModal');
+        if (!confirmModal || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+            // Réessayer après un court délai si Bootstrap n'est pas encore chargé
+            setTimeout(initConfirmModal, 100);
+            return;
+        }
+
+        const bsModal = new bootstrap.Modal(confirmModal);
+        const modalTitle = document.getElementById('confirmModalLabel');
+        const modalMessage = document.getElementById('confirmModalMessage');
+        let modalSubmit = document.getElementById('confirmModalSubmit');
+
+        // Fonction pour afficher le modal de confirmation
+        window.showConfirmModal = function(options) {
+            const {
+                title = 'Confirmation requise',
+                message = 'Êtes-vous sûr de vouloir effectuer cette action ?',
+                confirmText = 'Confirmer',
+                confirmClass = 'btn-danger',
+                icon = 'ti-alert-triangle',
+                iconColor = 'text-warning',
+                onSubmit = null,
+                form = null
+            } = options;
+
+            // Mettre à jour le titre
+            if (title && modalTitle) {
+                modalTitle.innerHTML = `<i class="ti ${icon} me-2 ${iconColor}"></i>${title}`;
+            }
+
+            // Mettre à jour le message
+            if (modalMessage) {
+                modalMessage.textContent = message;
+            }
+
+            // Gérer la soumission
+            const handleSubmit = () => {
+                bsModal.hide();
+
+                // Attendre que le modal soit complètement fermé avant de soumettre
+                confirmModal.addEventListener('hidden.bs.modal', function onSubmitComplete() {
+                    confirmModal.removeEventListener('hidden.bs.modal', onSubmitComplete);
+
+                    if (onSubmit && typeof onSubmit === 'function') {
+                        onSubmit();
+                    } else if (form && form.nodeType === 1) {
+                        // Vérifier que c'est bien un élément HTML
+                        form.submit();
+                    }
+                }, { once: true });
+            };
+
+            // Supprimer les anciens listeners en clonant le bouton
+            if (modalSubmit) {
+                const newSubmit = modalSubmit.cloneNode(true);
+                modalSubmit.parentNode.replaceChild(newSubmit, modalSubmit);
+                modalSubmit = newSubmit;
+
+                // Mettre à jour le bouton de confirmation
+                modalSubmit.className = `btn ${confirmClass}`;
+                modalSubmit.innerHTML = `<i class="ti ti-check me-1"></i>${confirmText}`;
+
+                // Ajouter le nouveau listener
+                modalSubmit.addEventListener('click', handleSubmit);
+            }
+
+            // Afficher le modal
+            bsModal.show();
+        };
+
+        // Gérer les formulaires avec data-confirm
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            if (form.hasAttribute('data-confirm')) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                let confirmOptions = {};
+                try {
+                    confirmOptions = form.dataset.confirmOptions ? JSON.parse(form.dataset.confirmOptions) : {};
+                } catch (err) {
+                    console.error('Erreur lors du parsing des options:', err);
+                }
+
+                const defaultOptions = {
+                    title: confirmOptions.title || 'Confirmation requise',
+                    message: confirmOptions.message || form.getAttribute('data-confirm'),
+                    confirmText: confirmOptions.confirmText || 'Confirmer',
+                    confirmClass: confirmOptions.confirmClass || 'btn-danger',
+                    icon: confirmOptions.icon || 'ti-alert-triangle',
+                    iconColor: confirmOptions.iconColor || 'text-warning',
+                    form: form // Passer le formulaire directement dans les options
+                };
+
+                if (window.showConfirmModal) {
+                    window.showConfirmModal(defaultOptions);
+                } else {
+                    // Fallback vers confirm() si le modal n'est pas disponible
+                    if (confirm(defaultOptions.message)) {
+                        form.submit();
+                    }
+                }
+            }
+        }, true); // Utiliser capture pour intercepter avant les autres handlers
+    }
+
+    // Initialiser quand le DOM est prêt
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initConfirmModal);
+    } else {
+        initConfirmModal();
+    }
+})();
+</script>
+
 <script>
     layout_change('light');
 </script>

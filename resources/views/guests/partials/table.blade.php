@@ -3,10 +3,6 @@
         <i class="ti ti-users me-2"></i> Aucun invité trouvé.
     </div>
 @else
-    <div class="alert alert-info d-flex align-items-center" role="alert">
-        <i class="ti ti-info-circle me-2"></i>
-        <span>Les invités archivés apparaissent en rouge. Utilisez "Restaurer" pour les réactiver.</span>
-    </div>
     <div class="table-responsive">
         <table class="table table-hover align-middle" id="guests-dt">
             <thead>
@@ -15,34 +11,51 @@
                         <input type="checkbox" id="select-all-guests" title="Sélectionner tout">
                     </th>
                     <th>Invité(s)</th>
-                    <th>Type</th>
-                    <th>Table</th>
-                    <th>Téléphone</th>
+                    <th class="d-none d-md-table-cell">Type</th>
+                    <th class="d-none d-lg-table-cell">Table</th>
+                    <th class="d-none d-xl-table-cell">Téléphone</th>
                     {{-- <th>Email</th> --}}
-                    <th>Statut RSVP</th>
-                    <th>Invitation</th>
-                    <th>WhatsApp</th>
-                    <th>Créé le</th>
-                    <th>Archivé le</th>
+                    <th class="d-none d-md-table-cell">Statut RSVP</th>
+                    <th class="d-none d-lg-table-cell">Invitation</th>
+                    <th class="d-none d-md-table-cell">WhatsApp</th>
+                    <th class="d-none d-xl-table-cell">Créé le</th>
                     <th class="text-end">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($guests as $guest)
-                    <tr @class(['table-danger' => $guest->trashed()])>
+                    <tr>
                         <td>
-                            @if (!$guest->trashed() && !$guest->whatsapp_sent_at)
+                            @if (!$guest->whatsapp_sent_at)
                                 <input type="checkbox" class="guest-checkbox" name="selected_guests[]" value="{{ $guest->id }}" data-guest-id="{{ $guest->id }}">
-                            @elseif (!$guest->trashed() && $guest->whatsapp_sent_at)
+                            @else
                                 <span class="text-muted" title="Invitation déjà envoyée">
                                     <i class="ti ti-check text-success"></i>
                                 </span>
                             @endif
                         </td>
                         <td>
-                            <span class="fw-semibold">{{ $guest->display_name }}</span>
+                            <div class="d-flex flex-column">
+                                <span class="fw-semibold">{{ $guest->display_name }}</span>
+                                <div class="d-flex d-md-none flex-wrap gap-1 mt-1">
+                                    @if ($guest->type === 'couple')
+                                        <span class="badge bg-light-primary border border-primary text-primary text-capitalize small">
+                                            <i class="ti ti-users"></i> Couple
+                                        </span>
+                                    @else
+                                        <span class="badge bg-light-primary border border-primary text-primary text-capitalize small">
+                                            <i class="ti ti-user"></i> Solo
+                                        </span>
+                                    @endif
+                                    @if ($guest->table)
+                                        <span class="badge bg-light-info border border-info text-info small">
+                                            <i class="ti ti-table"></i> {{ $guest->table->name }}
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
                         </td>
-                        <td>
+                        <td class="d-none d-md-table-cell">
                             @if ($guest->type === 'couple')
                                 <span class="badge bg-light-primary border border-primary text-primary text-capitalize">
                                     <i class="ti ti-users me-1"></i> Couple
@@ -57,7 +70,7 @@
                                 </span>
                             @endif
                         </td>
-                        <td>
+                        <td class="d-none d-lg-table-cell">
                             @if ($guest->table)
                                 {{ $guest->table->name }}
                                 @if ($guest->table->trashed())
@@ -67,9 +80,9 @@
                                 <span class="text-muted">Non définie</span>
                             @endif
                         </td>
-                        <td>{{ $guest->phone }}</td>
+                        <td class="d-none d-xl-table-cell">{{ $guest->phone }}</td>
                         {{-- <td>{{ $guest->email ?? '—' }}</td> --}}
-                        <td>
+                        <td class="d-none d-md-table-cell">
                             @php
                                 $status = $guest->rsvp_status;
                             @endphp
@@ -88,7 +101,7 @@
                                 <span class="badge bg-light-secondary border border-secondary text-secondary">En attente</span>
                             @endif
                         </td>
-                        <td>
+                        <td class="d-none d-lg-table-cell">
                             @if ($guest->invitation_token)
                                 <a href="{{ route('invitations.show', $guest->invitation_token) }}" class="btn btn-soft-primary btn-sm" target="_blank" rel="noopener">
                                     <i class="ti ti-external-link me-1"></i> Voir
@@ -97,7 +110,7 @@
                                 <span class="text-muted">Non générée</span>
                             @endif
                         </td>
-                        <td>
+                        <td class="d-none d-md-table-cell">
                             @if ($guest->whatsapp_sent_at)
                                 <span class="badge bg-light-success border border-success text-success">
                                     <i class="ti ti-check me-1"></i> Envoyé
@@ -111,18 +124,9 @@
                                 </span>
                             @endif
                         </td>
-                        <td>{{ $guest->created_at?->format('d/m/Y') }}</td>
-                        <td>{{ $guest->deleted_at?->format('d/m/Y') ?? '—' }}</td>
+                        <td class="d-none d-xl-table-cell">{{ $guest->created_at?->format('d/m/Y') }}</td>
                         <td class="text-end">
-                            @if ($guest->trashed())
-                                <form action="{{ route('guests.restore', $guest->id) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn btn-outline-success btn-sm" title="Restaurer">
-                                        <i class="ti ti-restore me-1"></i>
-                                        {{-- Restaurer --}}
-                                    </button>
-                                </form>
-                            @else
+                            <div class="d-flex flex-column flex-md-row gap-1 gap-md-2 align-items-end align-items-md-center justify-content-end">
                                 <div class="btn-group" role="group">
                                     <form action="{{ route('guests.send_invitation', $guest) }}" method="POST" class="d-inline">
                                         @csrf
@@ -139,19 +143,17 @@
                                         </button>
                                     </form>
                                 </div>
-                                <a href="{{ route('guests.edit', $guest) }}" class="btn btn-outline-warning btn-sm me-2" title="Modifier">
-                                    <i class="ti ti-edit me-1"></i>
-                                    {{-- Modifier --}}
+                                <a href="{{ route('guests.edit', $guest) }}" class="btn btn-outline-warning btn-sm" title="Modifier">
+                                    <i class="ti ti-edit"></i>
                                 </a>
-                                <form action="{{ route('guests.destroy', $guest) }}" method="POST" class="d-inline" onsubmit="return confirm('Archiver cet invité ?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Archiver">
-                                        <i class="ti ti-archive me-1"></i>
-                                        {{-- Archiver --}}
-                                    </button>
-                                </form>
-                            @endif
+                            <form action="{{ route('guests.destroy', $guest) }}" method="POST" class="d-inline" data-confirm="Archiver cet invité ?" data-confirm-options='{"title": "Archiver l&#39;invité", "message": "Êtes-vous sûr de vouloir archiver cet invité ? Il sera déplacé dans la corbeille.", "confirmText": "Archiver", "confirmClass": "btn-warning", "icon": "ti-archive", "iconColor": "text-warning"}'>
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Archiver">
+                                    <i class="ti ti-archive"></i>
+                                </button>
+                            </form>
+                            </div>
                         </td>
                     </tr>
                 @endforeach
