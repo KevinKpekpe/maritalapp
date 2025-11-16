@@ -6,11 +6,15 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Beverage;
 use App\Models\Guest;
 use App\Models\GuestPreference;
+use App\Models\Notification;
+use App\Models\User;
+use App\Mail\GuestConfirmationNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -66,6 +70,12 @@ class InvitationController extends Controller
 
             $this->storePreferences($guest, $request->input('beverage_ids', []));
             $preferencesMessage = 'Vos préférences ont été enregistrées.';
+
+            // Créer une notification pour tous les utilisateurs
+            $this->createNotificationsForUsers($guest);
+
+            // Envoyer un email à tous les utilisateurs
+            $this->sendEmailNotifications($guest);
         } else {
             $preferencesMessage = 'Vos préférences étaient déjà enregistrées.';
         }
@@ -106,7 +116,7 @@ class InvitationController extends Controller
         return redirect()->route('invitations.show', $token)->with('preferences_status', $message);
     }
 
-    protected function buildInvitationData(Guest $guest, bool $withBeverages = true): array
+    public function buildInvitationData(Guest $guest, bool $withBeverages = true): array
     {
         $invitationUrl = route('invitations.show', $guest->invitation_token);
         $qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=380x380&data=' . urlencode($invitationUrl);
@@ -226,6 +236,42 @@ class InvitationController extends Controller
             report($exception);
 
             return null;
+        }
+    }
+
+    /**
+     * Créer des notifications pour tous les utilisateurs lors de la confirmation
+     */
+    protected function createNotificationsForUsers(Guest $guest): void
+    {
+        $users = User::all();
+        $message = "{$guest->display_name} a confirmé sa présence" .
+                   ($guest->table ? " (Table: {$guest->table->name})" : "") . ".";
+
+        foreach ($users as $user) {
+            Notification::create([
+                'user_id' => $user->id,
+                'guest_id' => $guest->id,
+                'type' => 'rsvp_confirmed',
+                'message' => $message,
+            ]);
+        }
+    }
+
+    /**
+     * Envoyer des emails de notification à tous les utilisateurs
+     */
+    protected function sendEmailNotifications(Guest $guest): void
+    {
+        $users = User::all();
+
+        foreach ($users as $user) {
+            try {
+                Mail::to($user->email)->send(new GuestConfirmationNotification($guest));
+            } catch (\Exception $e) {
+                // Log l'erreur mais ne bloque pas le processus
+                report($e);
+            }
         }
     }
 }

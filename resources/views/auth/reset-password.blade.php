@@ -25,7 +25,7 @@
     <div class="auth-wrapper v3">
       <div class="auth-form">
         <div class="auth-header">
-          <a href="{{ url('/') }}"><img src="{{ asset('assets/images/logo-dark.svg') }}" alt="logo"></a>
+          <a href="{{ url('/') }}"><img src="{{ asset('logo.png') }}" alt="logo" style="max-height: 150px; width: auto;"></a>
         </div>
         <div class="card my-5">
           <div class="card-body">

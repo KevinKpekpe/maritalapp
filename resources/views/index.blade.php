@@ -20,6 +20,7 @@
             'guests_pending' => 0,
             'guests_confirmed' => 0,
             'tables_total' => 0,
+            'invitations_sent' => 0,
         ], $stats ?? []);
 
         $chartData = $chartData ?? [
@@ -60,6 +61,15 @@
                 <h6 class="mb-2 f-w-400 text-muted">Tables actives</h6>
                 <h4 class="mb-0 text-primary">{{ number_format($stats['tables_total']) }}</h4>
                 <p class="mb-0 text-muted text-sm">Tables disponibles pour les invités</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="mb-2 f-w-400 text-muted">Invitations envoyées</h6>
+                <h4 class="mb-0 text-info">{{ number_format($stats['invitations_sent']) }}</h4>
+                <p class="mb-0 text-muted text-sm">Invitations WhatsApp envoyées</p>
             </div>
         </div>
     </div>

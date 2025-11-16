@@ -67,8 +67,13 @@ class UltraMsgService
 
     protected function buildMessage(string $guestName, ?string $guestType = '', string $invitationUrl): string
     {
+        // Afficher le type uniquement si c'est un couple
+        $greeting = $guestType === 'couple'
+            ? "🎉 Bonjour {$guestType} {$guestName} !"
+            : "🎉 Bonjour {$guestName} !";
+
         return implode("\n", [
-            "🎉 Bonjour {$guestType} {$guestName} !",
+            $greeting,
             "",
             "Nous avons le plaisir de vous inviter au mariage de Raphaël & Daniella.",
             "",
@@ -185,6 +190,75 @@ class UltraMsgService
     protected function hasInternationalPrefix(string $digits): bool
     {
         return self::hasInternationalPrefixStatic($digits);
+    }
+
+    /**
+     * Envoie le PDF de l'invitation via WhatsApp à un invité.
+     *
+     * @return array{sent: bool, response: mixed}
+     */
+    public function sendInvitationPdf(Guest $guest, string $pdfPath): array
+    {
+        $phone = $this->sanitizePhone($guest->phone);
+
+        if (! $phone) {
+            throw new \InvalidArgumentException("Le numéro de téléphone de l'invité est invalide.");
+        }
+
+        if (! file_exists($pdfPath)) {
+            throw new \InvalidArgumentException("Le fichier PDF n'existe pas.");
+        }
+
+        // Afficher le type uniquement si c'est un couple
+        $greeting = $guest->type === 'couple'
+            ? "🎉 Bonjour couple {$guest->display_name} !"
+            : "🎉 Bonjour {$guest->display_name} !";
+
+        $message = implode("\n", [
+            $greeting,
+            "",
+            "Nous avons le plaisir de vous inviter au mariage de Raphaël & Daniella.",
+            "",
+            "📎 Vous trouverez votre invitation en pièce jointe.",
+            "",
+            "Dress code : All black 🖤",
+        ]);
+
+        // Lire le contenu du PDF
+        $pdfContent = file_get_contents($pdfPath);
+
+        // Extraire le nom du fichier
+        $filename = 'invitation_'.$guest->display_name.'.pdf';
+        $filename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $filename); // Nettoyer le nom de fichier
+
+        // Pour UltraMsg, le document peut être envoyé en base64 ou via une URL accessible publiquement
+        // On utilise le format base64 avec le préfixe data:application/pdf;base64,
+        // ou simplement le contenu base64 selon l'API
+        $pdfBase64 = base64_encode($pdfContent);
+
+        // Envoyer le document PDF via WhatsApp
+        // Paramètres: to, filename, document (base64 ou URL), caption
+        $response = $this->getClient()->sendDocumentMessage($phone, $filename, $pdfBase64, $message);
+
+        $sent = ! empty($response['sent']) || ! empty($response['id']);
+
+        if ($sent) {
+            $guest->forceFill([
+                'whatsapp_sent_at' => now(),
+            ])->save();
+        }
+
+        Log::info('Invitation PDF WhatsApp envoyée', [
+            'guest_id' => $guest->id,
+            'phone' => $phone,
+            'sent' => $sent,
+            'response' => $response,
+        ]);
+
+        return [
+            'sent' => $sent,
+            'response' => $response,
+        ];
     }
 
     /**

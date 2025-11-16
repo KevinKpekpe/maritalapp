@@ -47,12 +47,13 @@
                                 <option value="">Sélectionnez une table</option>
                                 @foreach ($tables as $tableOption)
                                     @php
-                                        $guestCount = $tableOption->guests_count ?? 0;
-                                        $remaining = 10 - $guestCount;
+                                        // Utiliser la capacité réelle calculée (tenant compte des couples)
+                                        $capacity = $tableOption->guests_count_display ?? $tableOption->capacity ?? 0;
+                                        $remaining = 10 - $capacity;
                                     @endphp
                                     <option value="{{ $tableOption->id }}" @selected(old('reception_table_id', $guest->reception_table_id) == $tableOption->id)>
                                         {{ $tableOption->name }}
-                                        ({{ $guestCount }}/10 invités
+                                        ({{ $capacity }}/10 places
                                         @if ($remaining > 0)
                                             - {{ $remaining }} place{{ $remaining > 1 ? 's' : '' }} disponible{{ $remaining > 1 ? 's' : '' }})
                                         @else

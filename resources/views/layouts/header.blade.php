@@ -3,13 +3,13 @@
 <!-- [Head] start -->
 
 <head>
-    <title>Home | MaritalApp</title>
+    <title>Home | Application Mariage</title>
     <!-- [Meta] -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description" content="Application de gestion MaritalApp">
-    <meta name="keywords" content="MaritalApp, Mariage, Gestion, Invités">
+    <meta name="description" content="Application de gestion de mariage">
+    <meta name="keywords" content="Mariage, Gestion, Invités">
     <meta name="author" content="Votre Organisation">
 
     <!-- [Favicon] -->
@@ -43,20 +43,8 @@
         <div class="navbar-wrapper">
             <div class="m-header">
                 <a href="{{ url('/') }}" class="b-brand text-primary" style="text-decoration: none;">
-                    <p style="
-                        font-family: 'Great Vibes',;
-                        font-size: 1.5rem;
-                        color: #b5824d;
-                        letter-spacing: 2px;
-                        text-shadow: 0 2px 8px #ecd9c6, 0 1px 0 #ffffff;
-                        margin-top: 2px;
-                        margin-bottom:0px;
-                        font-weight: 500;
-                    ">
-                        Marital APP
-                    </p>
+                    <img src="{{ asset('logo.png') }}" alt="Logo" style="max-height: 120px; width: auto;">
                 </a>
-                <link href="https://fonts.googleapis.com/css?family=Great+Vibes|Dancing+Script&display=swap" rel="stylesheet">
             </div>
             <div class="navbar-content">
                 <ul class="pc-navbar">
@@ -108,8 +96,8 @@
     </nav>
     <!-- [ Sidebar Menu ] end -->
     <!-- [ Header Topbar ] start -->
-    <header class="pc-header">
-        <div class="header-wrapper">
+    <header class="pc-header" style="overflow: visible;">
+        <div class="header-wrapper" style="overflow: visible;">
             <!-- [Mobile Media Block] start -->
             <div class="me-auto pc-mob-drp">
                 <ul class="list-unstyled">
@@ -148,8 +136,37 @@
                 </ul>
             </div>
             <!-- [Mobile Media Block end] -->
-            <div class="ms-auto">
-                <ul class="list-unstyled">
+            <div class="ms-auto" style="overflow: visible;">
+                <ul class="list-unstyled" style="overflow: visible;">
+                    <!-- Notifications -->
+                    <li class="dropdown pc-h-item" style="position: relative; overflow: visible;">
+                        <a class="pc-head-link dropdown-toggle arrow-none me-2" data-bs-toggle="dropdown" href="#"
+                            role="button" aria-haspopup="true" aria-expanded="false" id="notificationDropdown" style="position: relative; overflow: visible;">
+                            <i class="ti ti-mail"></i>
+                            <span class="badge bg-danger rounded-pill" id="notificationBadge" style="display: none; position: absolute; top: -8px; right: -6px; z-index: 1000;">0</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end pc-h-dropdown" id="notificationDropdownMenu"
+                            style="max-width: 350px; width: 350px;">
+                            <div class="dropdown-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">Notifications</h6>
+                                <button class="btn btn-sm btn-link text-primary p-0" id="markAllReadBtn" style="display: none;">
+                                    Tout marquer comme lu
+                                </button>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div id="notificationsList" style="max-height: 400px; overflow-y: auto;">
+                                <div class="text-center p-3 text-muted">
+                                    <i class="ti ti-loader-2 spin" id="notificationLoader"></i>
+                                    <p class="mb-0">Chargement...</p>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider" id="notificationFooter" style="display: none;"></div>
+                            <div class="text-center p-2" id="noNotifications" style="display: none;">
+                                <p class="text-muted mb-0">Aucune notification</p>
+                            </div>
+                        </div>
+                    </li>
+                    <!-- Profile -->
                     <li class="dropdown pc-h-item header-user-profile">
                         <a class="pc-head-link dropdown-toggle arrow-none me-0" data-bs-toggle="dropdown"
                             href="#" role="button" aria-haspopup="false" data-bs-auto-close="outside"

@@ -44,7 +44,7 @@
     <div class="auth-wrapper v3">
       <div class="auth-form">
         <div class="auth-header">
-          <a href="#"><img src="./assets/images/logo-dark.svg" alt="img"></a>
+          <a href="{{ url('/') }}"><img src="{{ asset('logo.png') }}" alt="logo" style="max-height: 150px; width: auto;"></a>
         </div>
         <div class="card my-5">
           <div class="card-body">
@@ -109,28 +109,28 @@
   <script src="./assets/js/pcoded.js"></script>
   <script src="./assets/js/plugins/feather.min.js"></script>
 
-  
-  
-  
-  
+
+
+
+
   <script>layout_change('light');</script>
-  
-  
-  
-  
+
+
+
+
   <script>change_box_container('false');</script>
-  
-  
-  
+
+
+
   <script>layout_rtl_change('false');</script>
-  
-  
+
+
   <script>preset_change("preset-1");</script>
-  
-  
+
+
   <script>font_change("Public-Sans");</script>
-  
-    
+
+
  <div class="offcanvas pct-offcanvas offcanvas-end" tabindex="-1" id="offcanvas_pc_layout">
   <div class="offcanvas-header bg-primary">
     <h5 class="offcanvas-title text-white">Mantis Customizer</h5>

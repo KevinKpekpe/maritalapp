@@ -123,13 +123,22 @@
                                     </button>
                                 </form>
                             @else
-                                <form action="{{ route('guests.send_invitation', $guest) }}" method="POST" class="d-inline me-2">
-                                    @csrf
-                                    <button type="submit" class="btn btn-outline-primary btn-sm" title="Envoyer l'invitation WhatsApp">
-                                        <i class="ti ti-brand-whatsapp me-1"></i>
-                                        {{-- Envoyer --}}
-                                    </button>
-                                </form>
+                                <div class="btn-group" role="group">
+                                    <form action="{{ route('guests.send_invitation', $guest) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-outline-primary btn-sm" title="Envoyer le lien d'invitation WhatsApp">
+                                            <i class="ti ti-brand-whatsapp me-1"></i>
+                                            <i class="ti ti-link"></i>
+                                        </button>
+                                    </form>
+                                    <form action="{{ route('guests.send_invitation_pdf', $guest) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-outline-success btn-sm" title="Envoyer le PDF de l'invitation WhatsApp">
+                                            <i class="ti ti-brand-whatsapp me-1"></i>
+                                            <i class="ti ti-file-pdf"></i>
+                                        </button>
+                                    </form>
+                                </div>
                                 <a href="{{ route('guests.edit', $guest) }}" class="btn btn-outline-warning btn-sm me-2" title="Modifier">
                                     <i class="ti ti-edit me-1"></i>
                                     {{-- Modifier --}}

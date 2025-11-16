@@ -36,6 +36,7 @@ Route::middleware('auth.session')->group(function () {
                 ->orWhere('rsvp_status', 'pending');
         })->count();
         $tableCount = ReceptionTable::count();
+        $invitationsSent = Guest::whereNotNull('whatsapp_sent_at')->count();
 
         // Données pour le graphique hebdomadaire (7 derniers jours)
         $weeklyData = [];
@@ -82,6 +83,7 @@ Route::middleware('auth.session')->group(function () {
                 'guests_confirmed' => $confirmedGuests,
                 'guests_pending' => $pendingGuests,
                 'tables_total' => $tableCount,
+                'invitations_sent' => $invitationsSent,
             ],
             'chartData' => [
                 'weekly' => [
@@ -99,6 +101,7 @@ Route::middleware('auth.session')->group(function () {
 
     Route::get('guests/search', [GuestController::class, 'search'])->name('guests.search');
     Route::post('guests/{guest}/send-invitation', [GuestController::class, 'sendInvitation'])->name('guests.send_invitation');
+    Route::post('guests/{guest}/send-invitation-pdf', [GuestController::class, 'sendInvitationPdf'])->name('guests.send_invitation_pdf');
     Route::post('guests/send-bulk-invitations', [GuestController::class, 'sendBulkInvitations'])->name('guests.send_bulk_invitations');
     Route::get('guests/export', [GuestController::class, 'export'])->name('guests.export');
     Route::get('guests/import', [GuestController::class, 'showImport'])->name('guests.import.show');
@@ -129,6 +132,11 @@ Route::middleware('auth.session')->group(function () {
     Route::get('/profile', [AuthController::class, 'showProfile'])->name('profile.show');
     Route::put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
     Route::post('/profile/change-password', [AuthController::class, 'changePassword'])->name('profile.change-password');
+
+    Route::get('/notifications/count', [\App\Http\Controllers\NotificationController::class, 'count'])->name('notifications.count');
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
+    Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-as-read');
 
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 });

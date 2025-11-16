@@ -46,4 +46,34 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Relation avec les notifications
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function notifications()
+    {
+        return $this->hasMany(\App\Models\Notification::class)->orderByDesc('created_at');
+    }
+
+    /**
+     * Obtenir les notifications non lues
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function unreadNotifications()
+    {
+        return $this->notifications()->whereNull('read_at');
+    }
+
+    /**
+     * Compter les notifications non lues
+     *
+     * @return int
+     */
+    public function unreadNotificationsCount(): int
+    {
+        return $this->unreadNotifications()->count();
+    }
 }

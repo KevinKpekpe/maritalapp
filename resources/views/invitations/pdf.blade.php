@@ -265,6 +265,12 @@
                         </div>
                     @endif
                     <div class="details-row">
+                        <div class="details-label">Type</div>
+                        <div class="details-value">
+                            <span class="dress-code">{{ $guest->type === 'couple' ? 'Couple' : 'Solo' }}</span>
+                        </div>
+                    </div>
+                    <div class="details-row">
                         <div class="details-label">Dress code</div>
                         <div class="details-value">
                             <span class="dress-code">{{ $event['dress_code'] ?? 'Chic et Élégant' }}</span>

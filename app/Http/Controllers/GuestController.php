@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Guest;
 use App\Models\ReceptionTable;
 use App\Services\WhatsApp\UltraMsgService;
+use App\Http\Controllers\InvitationController;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -98,9 +100,16 @@ class GuestController extends Controller
             ['label' => 'Ajouter un invité', 'url' => route('guests.create')],
         ];
 
+        // Calculer la capacité réelle de chaque table
+        $tables = $this->availableTables();
+        $tables->each(function ($table) {
+            $table->capacity = $this->calculateTableCapacity($table->id);
+            $table->guests_count_display = $table->capacity; // Pour l'affichage dans le formulaire
+        });
+
         return view('guests.form', [
             'guest' => new Guest(),
-            'tables' => $this->availableTables(),
+            'tables' => $tables,
             'breadcrumbs' => $breadcrumbs,
         ])->with('pageTitle', 'Ajouter un invité');
     }
@@ -124,9 +133,20 @@ class GuestController extends Controller
             ['label' => 'Modifier un invité', 'url' => route('guests.edit', $guest)],
         ];
 
+        // Calculer la capacité réelle de chaque table
+        $tables = $this->availableTables($guest->reception_table_id);
+        $tables->each(function ($table) use ($guest) {
+            // Exclure l'invité actuel du calcul si c'est la même table
+            $table->capacity = $this->calculateTableCapacity(
+                $table->id,
+                $table->id === $guest->reception_table_id ? $guest->id : null
+            );
+            $table->guests_count_display = $table->capacity; // Pour l'affichage dans le formulaire
+        });
+
         return view('guests.form', [
             'guest' => $guest,
-            'tables' => $this->availableTables($guest->reception_table_id),
+            'tables' => $tables,
             'breadcrumbs' => $breadcrumbs,
         ])->with('pageTitle', 'Modifier un invité');
     }
@@ -167,13 +187,13 @@ class GuestController extends Controller
             if ($result['sent']) {
                 return redirect()
                     ->route('guests.index')
-                    ->with('status', 'Invitation WhatsApp envoyée avec succès à '.$guest->display_name.'.');
+                    ->with('status', 'Lien d\'invitation WhatsApp envoyé avec succès à '.$guest->display_name.'.');
             } else {
                 $errorMessage = $result['response']['error'] ?? 'Erreur inconnue lors de l\'envoi de l\'invitation WhatsApp.';
 
                 return redirect()
                     ->route('guests.index')
-                    ->with('error', 'Échec de l\'envoi de l\'invitation WhatsApp à '.$guest->display_name.': '.$errorMessage);
+                    ->with('error', 'Échec de l\'envoi du lien d\'invitation WhatsApp à '.$guest->display_name.': '.$errorMessage);
             }
         } catch (\InvalidArgumentException $e) {
             return redirect()
@@ -189,6 +209,93 @@ class GuestController extends Controller
             return redirect()
                 ->route('guests.index')
                 ->with('error', 'Une erreur inattendue est survenue lors de l\'envoi de l\'invitation WhatsApp.');
+        }
+    }
+
+    /**
+     * Envoie le PDF de l'invitation via WhatsApp.
+     */
+    public function sendInvitationPdf(Request $request, Guest $guest, UltraMsgService $whatsAppService, InvitationController $invitationController): RedirectResponse
+    {
+        try {
+            // Générer le PDF
+            $guestWithTable = Guest::with('table')
+                ->where('id', $guest->id)
+                ->firstOrFail();
+
+            if (! $guestWithTable->invitation_token) {
+                $guestWithTable->forceFill([
+                    'invitation_token' => Str::uuid()->toString(),
+                ])->save();
+            }
+
+            $data = $invitationController->buildInvitationData($guestWithTable, false);
+
+            Pdf::setOptions([
+                'isRemoteEnabled' => true,
+            ]);
+
+            $pdf = Pdf::loadView('invitations.pdf', [
+                'guest' => $guestWithTable,
+                'event' => $data['event'],
+                'invitationUrl' => $data['invitationUrl'],
+                'qrCodeDataUri' => $data['qrCodeDataUri'],
+                'backgroundImage' => $data['pdfAssets']['background'] ?? null,
+                'bouquetImage' => $data['pdfAssets']['bouquet'] ?? null,
+            ])->setPaper('a4', 'portrait');
+
+            // Sauvegarder temporairement le PDF
+            $filename = 'invitation_'.$guestWithTable->invitation_token.'_'.time().'.pdf';
+            $tempPath = storage_path('app/temp/'.$filename);
+
+            // Créer le dossier temp s'il n'existe pas
+            if (! is_dir(storage_path('app/temp'))) {
+                mkdir(storage_path('app/temp'), 0755, true);
+            }
+
+            $pdf->save($tempPath);
+
+            try {
+                // Envoyer le PDF via WhatsApp
+                $result = $whatsAppService->sendInvitationPdf($guestWithTable, $tempPath);
+
+                // Supprimer le fichier temporaire après l'envoi
+                if (file_exists($tempPath)) {
+                    unlink($tempPath);
+                }
+
+                if ($result['sent']) {
+                    return redirect()
+                        ->route('guests.index')
+                        ->with('status', 'Invitation PDF envoyée avec succès à '.$guest->display_name.'.');
+                } else {
+                    $errorMessage = $result['response']['error'] ?? 'Erreur inconnue lors de l\'envoi du PDF.';
+
+                    return redirect()
+                        ->route('guests.index')
+                        ->with('error', 'Échec de l\'envoi du PDF à '.$guest->display_name.': '.$errorMessage);
+                }
+            } catch (\Exception $e) {
+                // Supprimer le fichier temporaire en cas d'erreur
+                if (file_exists($tempPath)) {
+                    unlink($tempPath);
+                }
+                throw $e;
+            }
+        } catch (\InvalidArgumentException $e) {
+            return redirect()
+                ->route('guests.index')
+                ->with('error', 'Échec de l\'envoi: '.$e->getMessage());
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('guests.index')
+                ->with('error', 'Configuration UltraMsg manquante: '.$e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+
+            return redirect()
+                ->route('guests.index')
+                ->with('error', 'Une erreur inattendue est survenue lors de l\'envoi du PDF WhatsApp.');
         }
     }
 
@@ -250,20 +357,20 @@ class GuestController extends Controller
             'reception_table_id' => [
                 'required',
                 'exists:reception_tables,id',
-                function ($attribute, $value, $fail) use ($guestId) {
-                    // Vérifier si la table a déjà 10 invités
+                function ($attribute, $value, $fail) use ($guestId, $request) {
+                    // Vérifier si la table a déjà atteint sa capacité maximale (10 places)
                     $table = ReceptionTable::find($value);
                     if ($table) {
-                        $guestCount = Guest::where('reception_table_id', $value)
-                            ->whereNull('deleted_at')
-                            ->when($guestId, function ($query) use ($guestId) {
-                                // Exclure l'invité actuel du comptage si on est en mode édition
-                                $query->where('id', '!=', $guestId);
-                            })
-                            ->count();
+                        // Calculer la capacité actuelle en tenant compte des couples
+                        $currentCapacity = $this->calculateTableCapacity($value, $guestId);
 
-                        if ($guestCount >= 10) {
-                            $fail('Cette table a déjà atteint sa capacité maximale de 10 invités.');
+                        // Calculer la capacité de l'invité à ajouter/modifier
+                        $guestType = $request->input('type', 'solo');
+                        $newGuestCapacity = $guestType === 'couple' ? 2 : 1;
+
+                        // Vérifier si l'ajout de cet invité dépasserait la capacité
+                        if ($currentCapacity + $newGuestCapacity > 10) {
+                            $fail('Cette table a déjà atteint sa capacité maximale de 10 places. Un couple occupe 2 places.');
                         }
                     }
                 },
@@ -490,13 +597,15 @@ class GuestController extends Controller
                 if (! empty($tableName)) {
                     $table = $tables->firstWhere('name', $tableName);
                     if ($table) {
-                        // Vérifier si la table a déjà 10 invités
-                        $guestCount = Guest::where('reception_table_id', $table->id)
-                            ->whereNull('deleted_at')
-                            ->count();
+                        // Calculer la capacité actuelle en tenant compte des couples
+                        $currentCapacity = $this->calculateTableCapacity($table->id);
 
-                        if ($guestCount >= 10) {
-                            $errors[] = "Ligne {$lineNumber}: La table '{$tableName}' a déjà atteint sa capacité maximale de 10 invités";
+                        // Calculer la capacité de l'invité à ajouter
+                        $newGuestCapacity = $type === 'couple' ? 2 : 1;
+
+                        // Vérifier si l'ajout de cet invité dépasserait la capacité
+                        if ($currentCapacity + $newGuestCapacity > 10) {
+                            $errors[] = "Ligne {$lineNumber}: La table '{$tableName}' n'a plus assez de places (capacité maximale: 10 places, un couple occupe 2 places)";
                             continue;
                         }
 
@@ -506,18 +615,17 @@ class GuestController extends Controller
                         continue;
                     }
                 } else {
-                    // Si aucune table n'est spécifiée, utiliser la première table disponible (avec moins de 10 invités)
-                    $availableTable = $tables->first(function ($table) {
-                        $guestCount = Guest::where('reception_table_id', $table->id)
-                            ->whereNull('deleted_at')
-                            ->count();
-                        return $guestCount < 10;
+                    // Si aucune table n'est spécifiée, utiliser la première table disponible (avec assez de places)
+                    $newGuestCapacity = $type === 'couple' ? 2 : 1;
+                    $availableTable = $tables->first(function ($table) use ($newGuestCapacity) {
+                        $currentCapacity = $this->calculateTableCapacity($table->id);
+                        return ($currentCapacity + $newGuestCapacity) <= 10;
                     });
 
                     if ($availableTable) {
                         $tableId = $availableTable->id;
                     } else {
-                        $errors[] = "Ligne {$lineNumber}: Aucune table disponible (toutes les tables ont atteint leur capacité maximale de 10 invités)";
+                        $errors[] = "Ligne {$lineNumber}: Aucune table disponible (toutes les tables ont atteint leur capacité maximale de 10 places)";
                         continue;
                     }
                 }
@@ -562,31 +670,57 @@ class GuestController extends Controller
     }
 
     /**
-     * Récupère les tables disponibles (qui ont moins de 10 invités).
+     * Calcule la capacité réelle d'une table en tenant compte des couples (couple = 2 places).
+     *
+     * @param int $tableId ID de la table
+     * @param int|null $excludeGuestId ID de l'invité à exclure du calcul (pour l'édition)
+     * @return int Nombre de places occupées
+     */
+    protected function calculateTableCapacity(int $tableId, ?int $excludeGuestId = null): int
+    {
+        $guests = Guest::where('reception_table_id', $tableId)
+            ->whereNull('deleted_at')
+            ->when($excludeGuestId, function ($query) use ($excludeGuestId) {
+                $query->where('id', '!=', $excludeGuestId);
+            })
+            ->get();
+
+        $capacity = 0;
+        foreach ($guests as $guest) {
+            // Un couple compte pour 2 places, un solo pour 1 place
+            $capacity += $guest->type === 'couple' ? 2 : 1;
+        }
+
+        return $capacity;
+    }
+
+    /**
+     * Récupère les tables disponibles (qui ont moins de 10 places occupées).
      *
      * @param int|null $currentTableId ID de la table actuelle (pour l'édition, permet de garder la table même si elle est pleine)
      * @return \Illuminate\Database\Eloquent\Collection
      */
     protected function availableTables(?int $currentTableId = null)
     {
-        $maxGuestsPerTable = 10;
+        $maxCapacityPerTable = 10;
 
-        // Récupérer toutes les tables avec le nombre d'invités actifs
+        // Récupérer toutes les tables
         $tables = ReceptionTable::withTrashed()
-            ->withCount(['guests' => function ($query) {
-                $query->whereNull('deleted_at');
-            }])
             ->orderBy('name')
             ->get();
 
-        // Filtrer les tables qui ont moins de 10 invités, ou la table actuelle si on est en mode édition
-        return $tables->filter(function ($table) use ($maxGuestsPerTable, $currentTableId) {
+        // Filtrer les tables qui ont moins de 10 places occupées, ou la table actuelle si on est en mode édition
+        return $tables->filter(function ($table) use ($maxCapacityPerTable, $currentTableId) {
             // Toujours inclure la table actuelle si on est en mode édition
             if ($currentTableId && $table->id === $currentTableId) {
                 return true;
             }
-            // Sinon, inclure seulement les tables avec moins de 10 invités
-            return $table->guests_count < $maxGuestsPerTable;
+
+            // Calculer la capacité réelle en tenant compte des couples
+            $currentCapacity = $this->calculateTableCapacity($table->id);
+
+            // Inclure seulement les tables avec moins de 10 places occupées
+            return $currentCapacity < $maxCapacityPerTable;
         });
     }
 }

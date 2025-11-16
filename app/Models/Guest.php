@@ -48,4 +48,12 @@ class Guest extends Model
     {
         return $this->primary_first_name;
     }
+
+    /**
+     * Relation avec les notifications
+     */
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
 }
