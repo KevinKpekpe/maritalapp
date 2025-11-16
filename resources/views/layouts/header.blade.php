@@ -13,7 +13,8 @@
     <meta name="author" content="Votre Organisation">
 
     <!-- [Favicon] -->
-    <link rel="icon" href="{{ asset('assets/images/favicon.svg') }}" type="image/x-icon">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('assets/images/favicon.svg') }}">
+    <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
 
     <!-- [Google Font] -->
     <link rel="stylesheet"

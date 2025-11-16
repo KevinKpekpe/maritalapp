@@ -13,7 +13,8 @@
   <meta name="author" content="CodedThemes">
 
   <!-- [Favicon] icon -->
-  <link rel="icon" href="./assets/images/favicon.svg" type="image/x-icon"> <!-- [Google Font] Family -->
+  <link rel="icon" type="image/svg+xml" href="{{ asset('assets/images/favicon.svg') }}">
+  <link rel="alternate icon" href="{{ asset('favicon.ico') }}"> <!-- [Google Font] Family -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" id="main-font-link">
 <!-- [Tabler Icons] https://tablericons.com -->
 <link rel="stylesheet" href="./assets/fonts/tabler-icons.min.css" >

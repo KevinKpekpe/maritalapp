@@ -13,7 +13,8 @@
   <meta name="author" content="SpectreCoding">
 
   <!-- [Favicon] icon -->
-  <link rel="icon" href="{{ asset('assets/images/favicon.svg') }}" type="image/x-icon">
+  <link rel="icon" type="image/svg+xml" href="{{ asset('assets/images/favicon.svg') }}">
+  <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
   <!-- [Google Font] Family -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" id="main-font-link">
   <!-- [Tabler Icons] https://tablericons.com -->

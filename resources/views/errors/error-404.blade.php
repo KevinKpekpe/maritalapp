@@ -13,7 +13,8 @@
   <meta name="author" content="CodedThemes">
 
   <!-- [Favicon] icon -->
-  <link rel="icon" href="../assets/images/favicon.svg" type="image/x-icon"> <!-- [Google Font] Family -->
+  <link rel="icon" type="image/svg+xml" href="{{ asset('assets/images/favicon.svg') }}">
+  <link rel="alternate icon" href="{{ asset('favicon.ico') }}"> <!-- [Google Font] Family -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" id="main-font-link">
 <!-- [Tabler Icons] https://tablericons.com -->
 <link rel="stylesheet" href="./assets/fonts/tabler-icons.min.css" >
@@ -71,28 +72,28 @@
   <script src="./assets/js/pcoded.js"></script>
   <script src="./assets/js/plugins/feather.min.js"></script>
 
-  
-  
-  
-  
+
+
+
+
   <script>layout_change('light');</script>
-  
-  
-  
-  
+
+
+
+
   <script>change_box_container('false');</script>
-  
-  
-  
+
+
+
   <script>layout_rtl_change('false');</script>
-  
-  
+
+
   <script>preset_change("preset-1");</script>
-  
-  
+
+
   <script>font_change("Public-Sans");</script>
-  
-    
+
+
  <div class="offcanvas pct-offcanvas offcanvas-end" tabindex="-1" id="offcanvas_pc_layout">
   <div class="offcanvas-header bg-primary">
     <h5 class="offcanvas-title text-white">Mantis Customizer</h5>
