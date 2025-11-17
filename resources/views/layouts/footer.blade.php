@@ -280,14 +280,14 @@
 
                         item.innerHTML = `
                             <div class="d-flex align-items-start">
-                                <div class="flex-shrink-0">
+                                <div class="flex-shrink-0 mt-1">
                                     <i class="ti ${icon} text-primary"></i>
                                 </div>
-                                <div class="flex-grow-1 ms-2">
-                                    <p class="mb-1 ${notification.read_at ? '' : 'fw-bold'}">${escapeHtml(notification.message)}</p>
-                                    <small class="text-muted">${timeAgo}</small>
+                                <div class="flex-grow-1 ms-2" style="min-width: 0;">
+                                    <p class="mb-1 ${notification.read_at ? '' : 'fw-bold'} text-break">${escapeHtml(notification.message)}</p>
+                                    <small class="text-muted d-block">${timeAgo}</small>
                                 </div>
-                                ${!notification.read_at ? '<span class="badge bg-primary rounded-pill">Nouveau</span>' : ''}
+                                ${!notification.read_at ? '<span class="badge bg-primary rounded-pill flex-shrink-0 ms-2">Nouveau</span>' : ''}
                             </div>
                         `;
 
@@ -494,6 +494,64 @@
 
     #notificationsList .dropdown-item.bg-light {
         background-color: #f8f9fa !important;
+    }
+
+    /* Styles pour les notifications sur mobile */
+    .notification-dropdown {
+        max-width: 350px;
+        width: 350px;
+    }
+
+    @media (max-width: 575.98px) {
+        .notification-dropdown {
+            max-width: calc(100vw - 2rem);
+            width: calc(100vw - 2rem);
+            left: auto !important;
+            right: 1rem !important;
+        }
+
+        .notification-list {
+            max-height: 60vh !important;
+        }
+
+        #notificationsList .dropdown-item {
+            padding: 0.75rem 0.75rem !important;
+            font-size: 0.875rem;
+        }
+
+        #notificationsList .dropdown-item p {
+            font-size: 0.875rem !important;
+            margin-bottom: 0.25rem !important;
+        }
+
+        #notificationsList .dropdown-item small {
+            font-size: 0.75rem !important;
+        }
+
+        .dropdown-header h6 {
+            font-size: 0.875rem;
+        }
+
+        .dropdown-header .btn {
+            font-size: 0.75rem;
+        }
+
+        #notificationBadge {
+            font-size: 10px !important;
+            padding: 3px 6px !important;
+            min-width: 18px !important;
+            height: 18px !important;
+            top: -6px !important;
+            right: -4px !important;
+        }
+    }
+
+    @media (max-width: 360px) {
+        .notification-dropdown {
+            max-width: calc(100vw - 1rem);
+            width: calc(100vw - 1rem);
+            right: 0.5rem !important;
+        }
     }
 </style>
 

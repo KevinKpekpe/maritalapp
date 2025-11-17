@@ -146,16 +146,16 @@
                             <i class="ti ti-mail"></i>
                             <span class="badge bg-danger rounded-pill" id="notificationBadge" style="display: none; position: absolute; top: -8px; right: -6px; z-index: 1000;">0</span>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-end pc-h-dropdown" id="notificationDropdownMenu"
-                            style="max-width: 350px; width: 350px;">
-                            <div class="dropdown-header d-flex justify-content-between align-items-center">
+                        <div class="dropdown-menu dropdown-menu-end pc-h-dropdown notification-dropdown" id="notificationDropdownMenu">
+                            <div class="dropdown-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                                 <h6 class="mb-0">Notifications</h6>
                                 <button class="btn btn-sm btn-link text-primary p-0" id="markAllReadBtn" style="display: none;">
-                                    Tout marquer comme lu
+                                    <span class="d-none d-sm-inline">Tout marquer comme lu</span>
+                                    <span class="d-sm-none">Tout lu</span>
                                 </button>
                             </div>
                             <div class="dropdown-divider"></div>
-                            <div id="notificationsList" style="max-height: 400px; overflow-y: auto;">
+                            <div id="notificationsList" class="notification-list">
                                 <div class="text-center p-3 text-muted">
                                     <i class="ti ti-loader-2 spin" id="notificationLoader"></i>
                                     <p class="mb-0">Chargement...</p>

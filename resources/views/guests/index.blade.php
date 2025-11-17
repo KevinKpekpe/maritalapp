@@ -35,7 +35,7 @@
                     </div>
                 </div>
             </div>
-            <div class="card-body pt-3">
+            <div class="card-body pt-3 px-3 px-md-4">
                 @if (session('status'))
                     <div class="alert alert-success" role="alert">
                         {{ session('status') }}
@@ -67,7 +67,7 @@
                     </div>
                 @endif
 
-                <div class="row g-4 mb-4" id="guest-filters">
+                <div class="row g-4 mb-4 mx-0" id="guest-filters">
                     <div class="col-12 col-md-6 col-lg-3">
                         <label for="filter-rsvp-status" class="form-label mb-2">Statut RSVP</label>
                         <select name="rsvp_status" id="filter-rsvp-status" class="form-select">
