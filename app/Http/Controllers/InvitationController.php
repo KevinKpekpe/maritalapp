@@ -52,7 +52,9 @@ class InvitationController extends Controller
             'bouquetImage' => $data['pdfAssets']['bouquet'] ?? null,
         ])->setPaper('a4', 'portrait');
 
-        $filename = $data['event']['pdf_filename'] ?? 'invitation.pdf';
+        // Utiliser le nom de l'invité pour le nom du fichier
+        $guestName = Str::slug($guest->display_name, '-');
+        $filename = 'Invitation-' . $guestName . '.pdf';
 
         return $pdf->download($filename);
     }
@@ -156,6 +158,9 @@ class InvitationController extends Controller
         ];
         $event['pdf_filename'] = 'Invitation-' . Str::slug($event['couple_names'] ?? 'mariage', '-') . '.pdf';
 
+        // Nom du fichier PDF basé sur le nom de l'invité
+        $guestPdfFilename = 'Invitation-' . Str::slug($guest->display_name, '-') . '.pdf';
+
         $pdfAssets = [
             'background' => $this->encodePublicAsset('invitations/fond.jpeg'),
             'bouquet' => $this->encodePublicAsset('invitations/bouquet.png'),
@@ -185,6 +190,7 @@ class InvitationController extends Controller
             'downloadNotice' => $downloadNotice,
             'pdfAssets' => $pdfAssets,
             'pdfAssetUrls' => $pdfAssetUrls,
+            'guestPdfFilename' => $guestPdfFilename,
         ];
     }
 

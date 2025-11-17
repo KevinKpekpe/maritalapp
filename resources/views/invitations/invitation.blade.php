@@ -1703,7 +1703,7 @@
                     doc.text("RSVP : {{ $invitationUrl }}", pageWidth / 2, qrY + qrSize + 16, { align: "center" });
                     doc.text("Dress code : {{ $event['dress_code'] ?? 'Chic et Élégant' }}", pageWidth / 2, qrY + qrSize + 23.5, { align: "center" });
 
-                    doc.save({{ json_encode($event['pdf_filename'] ?? 'invitation.pdf') }});
+                    doc.save({{ json_encode($guestPdfFilename ?? 'invitation.pdf') }});
                     console.info("[Invitation] PDF enregistré");
                     showDownloadMessage('Invitation téléchargée !');
                 }
