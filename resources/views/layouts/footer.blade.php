@@ -424,6 +424,67 @@
                 loadNotifications();
             });
 
+            // Centrer le dropdown sur mobile avec une approche robuste
+            const dropdownMenu = document.getElementById('notificationDropdownMenu');
+            if (dropdownMenu && notificationDropdown) {
+                function forceCenterDropdown() {
+                    if (window.innerWidth <= 575.98 && dropdownMenu.classList.contains('show')) {
+                        const viewportWidth = window.innerWidth;
+                        const dropdownWidth = dropdownMenu.offsetWidth || Math.min(viewportWidth - 24, 400);
+                        const leftPosition = Math.max(12, (viewportWidth - dropdownWidth) / 2);
+
+                        // Forcer le centrage avec position fixed
+                        dropdownMenu.style.setProperty('position', 'fixed', 'important');
+                        dropdownMenu.style.setProperty('left', leftPosition + 'px', 'important');
+                        dropdownMenu.style.setProperty('right', 'auto', 'important');
+                        dropdownMenu.style.setProperty('transform', 'none', 'important');
+                        dropdownMenu.style.setProperty('margin-left', '0', 'important');
+                        dropdownMenu.style.setProperty('margin-right', '0', 'important');
+                        dropdownMenu.style.setProperty('z-index', '1050', 'important');
+
+                        // Positionner verticalement en dessous du bouton
+                        const buttonRect = notificationDropdown.getBoundingClientRect();
+                        const topPosition = buttonRect.bottom + 8;
+                        dropdownMenu.style.setProperty('top', topPosition + 'px', 'important');
+                    }
+                }
+
+                // Centrer quand le dropdown s'ouvre
+                notificationDropdown.addEventListener('shown.bs.dropdown', function() {
+                    if (window.innerWidth <= 575.98) {
+                        // Plusieurs tentatives pour s'assurer que le centrage est appliqué
+                        requestAnimationFrame(function() {
+                            forceCenterDropdown();
+                            setTimeout(forceCenterDropdown, 50);
+                            setTimeout(forceCenterDropdown, 100);
+                            setTimeout(forceCenterDropdown, 200);
+                        });
+                    }
+                });
+
+                // Observer les changements de style pour maintenir le centrage
+                if (window.MutationObserver) {
+                    const observer = new MutationObserver(function(mutations) {
+                        if (window.innerWidth <= 575.98 && dropdownMenu.classList.contains('show')) {
+                            forceCenterDropdown();
+                        }
+                    });
+                    observer.observe(dropdownMenu, {
+                        attributes: true,
+                        attributeFilter: ['style', 'class'],
+                        childList: false,
+                        subtree: false
+                    });
+                }
+
+                // Re-centrer lors du redimensionnement
+                window.addEventListener('resize', function() {
+                    if (dropdownMenu.classList.contains('show') && window.innerWidth <= 575.98) {
+                        forceCenterDropdown();
+                    }
+                });
+            }
+
             // Charger le compteur au chargement de la page
             loadNotificationCount();
 
@@ -500,57 +561,192 @@
     .notification-dropdown {
         max-width: 350px;
         width: 350px;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    }
+
+    @media (max-width: 991.98px) {
+        .notification-dropdown {
+            max-width: 90vw !important;
+            width: 90vw !important;
+            max-width: 400px !important;
+        }
+
+        .notification-dropdown::before,
+        .notification-dropdown::after {
+            display: none !important;
+        }
     }
 
     @media (max-width: 575.98px) {
         .notification-dropdown {
-            max-width: calc(100vw - 2rem);
-            width: calc(100vw - 2rem);
-            left: auto !important;
-            right: 1rem !important;
+            max-width: calc(100vw - 1.5rem) !important;
+            width: calc(100vw - 1.5rem) !important;
+            /* Centrer avec left et margin négatif */
+            left: 50% !important;
+            right: auto !important;
+            transform: translateX(-50%) !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+
+        /* S'assurer que le dropdown reste centré quand il est visible */
+        .notification-dropdown.show,
+        .notification-dropdown.dropdown-menu-end.show {
+            left: 50% !important;
+            right: auto !important;
+            transform: translateX(-50%) !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
         }
 
         .notification-list {
-            max-height: 60vh !important;
+            max-height: 55vh !important;
         }
 
         #notificationsList .dropdown-item {
-            padding: 0.75rem 0.75rem !important;
-            font-size: 0.875rem;
+            padding: 0.625rem 0.75rem !important;
+            font-size: 0.8125rem;
+            white-space: normal !important;
+            word-wrap: break-word !important;
         }
 
         #notificationsList .dropdown-item p {
-            font-size: 0.875rem !important;
+            font-size: 0.8125rem !important;
             margin-bottom: 0.25rem !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            line-height: 1.4 !important;
         }
 
         #notificationsList .dropdown-item small {
-            font-size: 0.75rem !important;
+            font-size: 0.6875rem !important;
+            display: block;
+            margin-top: 0.25rem;
+        }
+
+        .dropdown-header {
+            padding: 0.625rem 0.75rem !important;
         }
 
         .dropdown-header h6 {
-            font-size: 0.875rem;
+            font-size: 0.8125rem;
+            margin: 0;
         }
 
         .dropdown-header .btn {
-            font-size: 0.75rem;
+            font-size: 0.6875rem;
+            white-space: nowrap;
+            padding: 0.125rem 0.25rem !important;
         }
 
         #notificationBadge {
-            font-size: 10px !important;
-            padding: 3px 6px !important;
-            min-width: 18px !important;
-            height: 18px !important;
-            top: -6px !important;
-            right: -4px !important;
+            font-size: 9px !important;
+            padding: 2px 5px !important;
+            min-width: 16px !important;
+            height: 16px !important;
+            top: -5px !important;
+            right: -3px !important;
+        }
+
+        #notificationsList .dropdown-item .d-flex {
+            flex-wrap: wrap;
+            gap: 0.375rem;
+        }
+
+        #notificationsList .dropdown-item .badge {
+            margin-left: auto;
+            flex-shrink: 0;
+            font-size: 0.625rem !important;
+            padding: 0.125rem 0.375rem !important;
+        }
+
+        #notificationsList .dropdown-item .flex-shrink-0 {
+            margin-right: 0.5rem;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .notification-dropdown {
+            max-width: calc(100vw - 0.5rem) !important;
+            width: calc(100vw - 0.5rem) !important;
+        }
+
+        .notification-list {
+            max-height: 50vh !important;
         }
     }
 
     @media (max-width: 360px) {
         .notification-dropdown {
-            max-width: calc(100vw - 1rem);
-            width: calc(100vw - 1rem);
-            right: 0.5rem !important;
+            max-width: calc(100vw - 0.25rem) !important;
+            width: calc(100vw - 0.25rem) !important;
+        }
+
+        .dropdown-header {
+            padding: 0.5rem 0.625rem !important;
+        }
+
+        .dropdown-header h6 {
+            font-size: 0.75rem;
+        }
+
+        .dropdown-header .btn {
+            font-size: 0.625rem;
+        }
+
+        #notificationsList .dropdown-item {
+            padding: 0.5rem 0.625rem !important;
+            font-size: 0.75rem;
+        }
+
+        #notificationsList .dropdown-item p {
+            font-size: 0.75rem !important;
+        }
+
+        #notificationsList .dropdown-item small {
+            font-size: 0.625rem !important;
+        }
+
+        .notification-list {
+            max-height: 45vh !important;
+        }
+    }
+
+    /* Ajustements du header pour très petits écrans */
+    @media (max-width: 400px) {
+        .pc-header .ms-auto ul.list-unstyled {
+            gap: 0.25rem !important;
+        }
+
+        .pc-head-link {
+            padding: 0.5rem 0.375rem !important;
+        }
+
+        .pc-head-link i {
+            font-size: 1.125rem !important;
+        }
+
+        .header-user-profile .pc-head-link span {
+            display: none !important;
+        }
+    }
+
+    @media (max-width: 360px) {
+        .pc-header .ms-auto ul.list-unstyled {
+            gap: 0.125rem !important;
+        }
+
+        .pc-head-link {
+            padding: 0.5rem 0.25rem !important;
+        }
+
+        .pc-head-link i {
+            font-size: 1rem !important;
+        }
+
+        #notificationDropdown {
+            margin-right: 0.25rem !important;
         }
     }
 </style>

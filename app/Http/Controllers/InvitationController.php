@@ -245,8 +245,7 @@ class InvitationController extends Controller
     protected function createNotificationsForUsers(Guest $guest): void
     {
         $users = User::all();
-        $message = "{$guest->display_name} a confirmé sa présence" .
-                   ($guest->table ? " (Table: {$guest->table->name})" : "") . ".";
+        $message = "{$guest->display_name} a confirmé sa présence.";
 
         foreach ($users as $user) {
             Notification::create([

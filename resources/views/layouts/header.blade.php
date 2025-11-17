@@ -155,7 +155,7 @@
                                 </button>
                             </div>
                             <div class="dropdown-divider"></div>
-                            <div id="notificationsList" class="notification-list">
+                            <div id="notificationsList" class="notification-list" style="max-height: 400px; overflow-y: auto;">
                                 <div class="text-center p-3 text-muted">
                                     <i class="ti ti-loader-2 spin" id="notificationLoader"></i>
                                     <p class="mb-0">Chargement...</p>
