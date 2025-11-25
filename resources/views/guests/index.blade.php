@@ -94,10 +94,20 @@
                         </select>
                     </div>
                     <div class="col-12 col-md-6 col-lg-3">
+                        <label for="filter-table" class="form-label mb-2">Table</label>
+                        <select name="table_id" id="filter-table" class="form-select">
+                            <option value="">Toutes les tables</option>
+                            @foreach ($tables ?? [] as $table)
+                                <option value="{{ $table->id }}">{{ $table->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-3">
                         <label for="filter-sort" class="form-label mb-2">Tri</label>
                         <select name="sort" id="filter-sort" class="form-select">
                             <option value="recent" selected>Du plus récent au plus ancien</option>
                             <option value="oldest">Du plus ancien au plus récent</option>
+                            <option value="table">Par table</option>
                             <option value="">Tri alphabétique</option>
                         </select>
                     </div>
@@ -130,6 +140,50 @@
             loader.classList.toggle('d-none', !visible);
         }
 
+        function updateURL() {
+            const url = new URL(window.location);
+            const query = searchInput ? searchInput.value.trim() : '';
+            
+            // Réinitialiser les paramètres
+            url.searchParams.delete('query');
+            url.searchParams.delete('rsvp_status');
+            url.searchParams.delete('whatsapp_status');
+            url.searchParams.delete('guest_type');
+            url.searchParams.delete('table_id');
+            url.searchParams.delete('sort');
+
+            // Ajouter les nouveaux paramètres
+            if (query) {
+                url.searchParams.set('query', query);
+            }
+
+            filterInputs.forEach(select => {
+                if (select.value) {
+                    url.searchParams.set(select.name, select.value);
+                }
+            });
+
+            // Mettre à jour l'URL sans recharger la page
+            window.history.pushState({}, '', url);
+        }
+
+        function restoreFiltersFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Restaurer la recherche
+            if (searchInput && urlParams.has('query')) {
+                searchInput.value = urlParams.get('query');
+            }
+
+            // Restaurer les filtres
+            filterInputs.forEach(select => {
+                const paramValue = urlParams.get(select.name);
+                if (paramValue !== null) {
+                    select.value = paramValue;
+                }
+            });
+        }
+
         function fetchGuests() {
             if (activeController) {
                 activeController.abort();
@@ -148,6 +202,9 @@
                     url.searchParams.set(select.name, select.value);
                 }
             });
+
+            // Mettre à jour l'URL
+            updateURL();
 
             toggleLoader(true);
 
@@ -365,6 +422,15 @@
                 fetchGuests();
             });
         });
+
+        // Restaurer les filtres depuis l'URL au chargement
+        restoreFiltersFromURL();
+
+        // Si des filtres sont présents dans l'URL, charger les invités
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.toString()) {
+            fetchGuests();
+        }
 
         // Initialiser les handlers au chargement de la page
         initSelectionHandlers();

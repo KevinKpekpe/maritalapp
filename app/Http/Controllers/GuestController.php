@@ -25,12 +25,16 @@ class GuestController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
+        $tables = ReceptionTable::withTrashed()
+            ->orderBy('name')
+            ->get();
+
         $breadcrumbs = [
             ['label' => 'Accueil', 'url' => url('/')],
             ['label' => 'Invités', 'url' => route('guests.index')],
         ];
 
-        return view('guests.index', compact('guests', 'breadcrumbs'))->with('pageTitle', 'Invités');
+        return view('guests.index', compact('guests', 'tables', 'breadcrumbs'))->with('pageTitle', 'Invités');
     }
 
     /**
@@ -92,11 +96,24 @@ class GuestController extends Controller
             $guestsQuery->where('type', $typeFilter);
         }
 
+        $tableFilter = $request->string('table_id')->value();
+        if ($tableFilter !== '') {
+            $guestsQuery->where('reception_table_id', $tableFilter);
+        }
+
         $sort = $request->string('sort')->value();
         if ($sort === 'recent') {
             $guestsQuery->orderByDesc('created_at');
         } elseif ($sort === 'oldest') {
             $guestsQuery->orderBy('created_at');
+        } elseif ($sort === 'table') {
+            $guestsQuery->leftJoin('reception_tables', function ($join) {
+                $join->on('guests.reception_table_id', '=', 'reception_tables.id')
+                    ->whereNull('reception_tables.deleted_at');
+            })
+                ->orderByRaw('reception_tables.name IS NULL, reception_tables.name ASC')
+                ->orderBy('guests.primary_first_name')
+                ->select('guests.*');
         } else {
             $guestsQuery->orderBy('primary_first_name');
         }
