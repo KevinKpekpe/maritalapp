@@ -13,7 +13,7 @@
         }
 
         @page {
-            margin: 18mm 16mm;
+            margin: 10mm 12mm;
         }
 
         body {
@@ -25,11 +25,11 @@
 
         .page {
             position: relative;
-            min-height: 260mm;
-            padding: 22mm 18mm;
+            height: 277mm;
+            padding: 12mm 14mm;
             background: #fffdf9;
             border: 1px solid #f1d7b8;
-            border-radius: 18px;
+            border-radius: 12px;
             overflow: hidden;
         }
 
@@ -47,10 +47,10 @@
 
         .bouquet-overlay {
             position: absolute;
-            bottom: 12mm;
-            right: 14mm;
-            width: 85mm;
-            opacity: 0.22;
+            bottom: 8mm;
+            right: 10mm;
+            width: 60mm;
+            opacity: 0.18;
         }
 
         .bouquet-overlay img {
@@ -64,7 +64,7 @@
 
         .headline {
             text-align: center;
-            margin-bottom: 18mm;
+            margin-bottom: 8mm;
         }
 
         .badge {
@@ -92,9 +92,9 @@
         }
 
         .couple-name {
-            margin: 10px 0 4px;
-            font-size: 34px;
-            letter-spacing: 1px;
+            margin: 6px 0 2px;
+            font-size: 28px;
+            letter-spacing: 0.5px;
             color: #b57533;
             font-family: 'Great Vibes', 'DejaVu Serif', cursive;
             font-style: normal;
@@ -111,17 +111,17 @@
 
         .invitation-card {
             border: 1px solid #efdcc6;
-            border-radius: 16px;
-            padding: 18px 22px;
-            margin-bottom: 18mm;
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin-bottom: 8mm;
             background: linear-gradient(145deg, rgba(255, 251, 245, 0.88), rgba(255, 234, 211, 0.9));
             font-family: "DejaVu Serif", serif;
         }
 
         .salutation {
-            font-size: 13px;
-            margin-bottom: 10px;
-            line-height: 1.7;
+            font-size: 11px;
+            margin-bottom: 6px;
+            line-height: 1.5;
         }
 
         .details-grid {
@@ -137,9 +137,9 @@
         .details-label,
         .details-value {
             display: table-cell;
-            padding: 6px 0;
+            padding: 3px 0;
             vertical-align: top;
-            font-size: 12px;
+            font-size: 10px;
             font-family: "DejaVu Sans", sans-serif;
         }
 
@@ -150,15 +150,15 @@
         }
 
         .program-section {
-            margin-bottom: 16mm;
+            margin-bottom: 6mm;
         }
 
         .section-title {
             text-transform: uppercase;
-            letter-spacing: 2px;
-            font-size: 13px;
+            letter-spacing: 1.5px;
+            font-size: 11px;
             color: #bb8444;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
             font-family: "DejaVu Sans", sans-serif;
             font-weight: 600;
         }
@@ -182,8 +182,8 @@
 
         .timeline-cell {
             display: table-cell;
-            padding: 12px 14px;
-            font-size: 12px;
+            padding: 6px 8px;
+            font-size: 10px;
             vertical-align: top;
         }
 
@@ -194,36 +194,36 @@
         }
 
         .note {
-            margin-top: 10px;
+            margin-top: 4px;
             font-style: italic;
             color: #7a6b5c;
-            font-size: 11px;
+            font-size: 9px;
         }
 
         .qr-section {
             text-align: center;
-            margin-top: 20mm;
+            margin-top: 6mm;
         }
 
         .qr-section img {
-            width: 135px;
-            height: 135px;
-            border: 6px solid #fff;
-            box-shadow: 0 10px 30px rgba(69, 52, 32, 0.16);
-            border-radius: 18px;
+            width: 80px;
+            height: 80px;
+            border: 4px solid #fff;
+            box-shadow: 0 6px 20px rgba(69, 52, 32, 0.16);
+            border-radius: 12px;
         }
 
         .qr-caption {
-            margin-top: 10px;
-            font-size: 11px;
+            margin-top: 4px;
+            font-size: 9px;
             color: #605349;
         }
 
         .footer {
-            margin-top: 12mm;
+            margin-top: 4mm;
             text-align: center;
-            font-size: 11px;
-            letter-spacing: 1px;
+            font-size: 9px;
+            letter-spacing: 0.5px;
             text-transform: uppercase;
             color: #8c7c6b;
         }
@@ -252,10 +252,17 @@
 
             <div class="invitation-card">
                 <p class="salutation">
-                    Cher·e <span class="guest-name">{{ $guest->display_name }}</span>,<br>
-                    C’est avec une immense joie que nous vous invitons à témoigner de nos vœux sacrés
-                    et à partager une soirée scintillante.
-                    Votre présence chérira notre histoire et illuminera cette journée.
+                    @if ($guest->type === 'couple')
+                        Cher couple <span class="guest-name">{{ $guest->display_name }}</span>,<br>
+                        C'est avec une immense joie que nous vous invitons, couple {{ $guest->display_name }}, à témoigner de nos vœux sacrés
+                        et à partager une soirée scintillante.
+                        Votre présence chérira notre histoire et illuminera cette journée.
+                    @else
+                        Cher·e <span class="guest-name">{{ $guest->display_name }}</span>,<br>
+                        C'est avec une immense joie que nous vous invitons à témoigner de nos vœux sacrés
+                        et à partager une soirée scintillante.
+                        Votre présence chérira notre histoire et illuminera cette journée.
+                    @endif
                 </p>
                 <div class="details-grid">
                     @if ($guest->table)

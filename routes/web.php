@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('invitations/{token}', [InvitationController::class, 'show'])->name('invitations.show');
 Route::post('invitations/{token}/confirm', [InvitationController::class, 'confirm'])->name('invitations.confirm');
 Route::get('invitations/{token}/download', [InvitationController::class, 'download'])->name('invitations.download');
+Route::get('invitations/{token}/download-image', [InvitationController::class, 'downloadImage'])->name('invitations.download-image');
+Route::post('invitations/{token}/send-link-whatsapp', [InvitationController::class, 'sendLinkViaWhatsApp'])->name('invitations.send-link-whatsapp');
+Route::post('invitations/{token}/send-image-whatsapp', [InvitationController::class, 'sendImageViaWhatsApp'])->name('invitations.send-image-whatsapp');
+Route::post('invitations/{token}/send-pdf-whatsapp', [InvitationController::class, 'sendPdfViaWhatsApp'])->name('invitations.send-pdf-whatsapp');
 Route::post('invitations/{token}/preferences', [InvitationController::class, 'updatePreferences'])->name('invitations.preferences');
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -101,6 +105,7 @@ Route::middleware('auth.session')->group(function () {
 
     Route::get('guests/search', [GuestController::class, 'search'])->name('guests.search');
     Route::post('guests/{guest}/send-invitation', [GuestController::class, 'sendInvitation'])->name('guests.send_invitation');
+    Route::post('guests/{guest}/send-invitation-image', [GuestController::class, 'sendInvitationImage'])->name('guests.send_invitation_image');
     Route::post('guests/{guest}/send-invitation-pdf', [GuestController::class, 'sendInvitationPdf'])->name('guests.send_invitation_pdf');
     Route::post('guests/send-bulk-invitations', [GuestController::class, 'sendBulkInvitations'])->name('guests.send_bulk_invitations');
     Route::get('guests/export', [GuestController::class, 'export'])->name('guests.export');

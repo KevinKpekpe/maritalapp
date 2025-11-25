@@ -262,6 +262,73 @@ class UltraMsgService
     }
 
     /**
+     * Envoie l'image de l'invitation via WhatsApp à un invité.
+     *
+     * @return array{sent: bool, response: mixed}
+     */
+    public function sendInvitationImage(Guest $guest, string $imagePath): array
+    {
+        $phone = $this->sanitizePhone($guest->phone);
+
+        if (! $phone) {
+            throw new \InvalidArgumentException("Le numéro de téléphone de l'invité est invalide.");
+        }
+
+        if (! file_exists($imagePath)) {
+            throw new \InvalidArgumentException("Le fichier image n'existe pas.");
+        }
+
+        // Afficher le type uniquement si c'est un couple
+        $greeting = $guest->type === 'couple'
+            ? "🎉 Bonjour couple {$guest->display_name} !"
+            : "🎉 Bonjour {$guest->display_name} !";
+
+        $message = implode("\n", [
+            $greeting,
+            "",
+            "Nous avons le plaisir de vous inviter au mariage de Raphaël & Daniella.",
+            "",
+            "📷 Vous trouverez votre invitation en image ci-dessous.",
+            "",
+            "Dress code : All black 🖤",
+        ]);
+
+        // Lire le contenu de l'image
+        $imageContent = file_get_contents($imagePath);
+
+        // Extraire le nom du fichier
+        $filename = 'invitation_'.$guest->display_name.'.png';
+        $filename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $filename); // Nettoyer le nom de fichier
+
+        // Encoder l'image en base64
+        $imageBase64 = base64_encode($imageContent);
+
+        // Envoyer l'image via WhatsApp
+        // Paramètres: to, image (base64), caption, priority, referenceId, nocache
+        $response = $this->getClient()->sendImageMessage($phone, $imageBase64, $message);
+
+        $sent = ! empty($response['sent']) || ! empty($response['id']);
+
+        if ($sent) {
+            $guest->forceFill([
+                'whatsapp_sent_at' => now(),
+            ])->save();
+        }
+
+        Log::info('Invitation Image WhatsApp envoyée', [
+            'guest_id' => $guest->id,
+            'phone' => $phone,
+            'sent' => $sent,
+            'response' => $response,
+        ]);
+
+        return [
+            'sent' => $sent,
+            'response' => $response,
+        ];
+    }
+
+    /**
      * @throws \RuntimeException
      */
     protected function getClient(): WhatsAppApi

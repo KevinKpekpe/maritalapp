@@ -9,14 +9,17 @@ use App\Models\GuestPreference;
 use App\Models\Notification;
 use App\Models\User;
 use App\Mail\GuestConfirmationNotification;
+use App\Services\WhatsApp\UltraMsgService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class InvitationController extends Controller
 {
@@ -57,6 +60,483 @@ class InvitationController extends Controller
         $filename = 'Invitation-' . $guestName . '.pdf';
 
         return $pdf->download($filename);
+    }
+
+    public function downloadImage(string $token): BinaryFileResponse
+    {
+        $guest = Guest::with('table')
+            ->where('invitation_token', $token)
+            ->firstOrFail();
+
+        $data = $this->buildInvitationData($guest, false);
+
+        Pdf::setOptions([
+            'isRemoteEnabled' => true,
+        ]);
+
+        $pdf = Pdf::loadView('invitations.pdf', [
+            'guest' => $guest,
+            'event' => $data['event'],
+            'invitationUrl' => $data['invitationUrl'],
+            'qrCodeDataUri' => $data['qrCodeDataUri'],
+            'backgroundImage' => $data['pdfAssets']['background'] ?? null,
+            'bouquetImage' => $data['pdfAssets']['bouquet'] ?? null,
+        ])->setPaper('a4', 'portrait');
+
+        // Générer un nom de fichier unique pour le PDF temporaire
+        $tempDir = storage_path('app/temp');
+        if (!is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $tempPdfPath = $tempDir . '/' . uniqid('invitation_', true) . '.pdf';
+        // pdftoppm ajoute automatiquement -1.png, donc on ne met pas l'extension
+        $tempImageBase = $tempDir . '/' . uniqid('invitation_', true);
+
+        try {
+            // Sauvegarder le PDF temporairement
+            $pdfContent = $pdf->output();
+            if (empty($pdfContent)) {
+                throw new \RuntimeException('Le PDF généré est vide.');
+            }
+
+            $written = file_put_contents($tempPdfPath, $pdfContent);
+            if ($written === false || !file_exists($tempPdfPath)) {
+                throw new \RuntimeException('Impossible de sauvegarder le PDF temporaire.');
+            }
+
+            // Vérifier que le fichier PDF est valide (taille > 0)
+            if (filesize($tempPdfPath) === 0) {
+                throw new \RuntimeException('Le fichier PDF généré est vide.');
+            }
+
+            // Convertir uniquement la première page du PDF en image avec ImageMagick convert
+            // [0] signifie la première page du PDF
+            // -density 300 : résolution 300 DPI pour une bonne qualité
+            // -quality 95 : qualité de compression PNG
+            $finalImagePath = $tempImageBase . '.png';
+            $command = sprintf(
+                'convert -density 300 -quality 95 %s[0] %s 2>&1',
+                escapeshellarg($tempPdfPath),
+                escapeshellarg($finalImagePath)
+            );
+
+            $output = [];
+            $returnCode = 0;
+            exec($command, $output, $returnCode);
+
+            if ($returnCode !== 0) {
+                $errorMsg = !empty($output) ? implode("\n", $output) : "Code de retour: $returnCode";
+                throw new \RuntimeException("Échec de la conversion PDF en image (ImageMagick): $errorMsg");
+            }
+
+            if (!file_exists($finalImagePath)) {
+                $errorMsg = !empty($output) ? implode("\n", $output) : "Fichier généré introuvable";
+                throw new \RuntimeException("Le fichier image n'a pas été généré: $errorMsg");
+            }
+
+            // Vérifier que l'image générée n'est pas vide
+            if (filesize($finalImagePath) === 0) {
+                throw new \RuntimeException('Le fichier image généré est vide.');
+            }
+
+            // Renommer le fichier généré pour le téléchargement
+            $guestName = Str::slug($guest->display_name, '-');
+            $downloadImagePath = $tempDir . '/Invitation-' . $guestName . '.png';
+            rename($finalImagePath, $downloadImagePath);
+            $finalImagePath = $downloadImagePath;
+
+            // Nettoyer le PDF temporaire
+            if (file_exists($tempPdfPath)) {
+                unlink($tempPdfPath);
+            }
+
+            // Retourner l'image en téléchargement
+            return response()->download($finalImagePath, 'Invitation-' . $guestName . '.png', [
+                'Content-Type' => 'image/png',
+            ])->deleteFileAfterSend(true);
+
+        } catch (\Throwable $e) {
+            // Nettoyer les fichiers temporaires en cas d'erreur
+            if (file_exists($tempPdfPath)) {
+                unlink($tempPdfPath);
+            }
+            if (file_exists($tempImageBase . '.png')) {
+                unlink($tempImageBase . '.png');
+            }
+            if (isset($finalImagePath) && file_exists($finalImagePath) && $finalImagePath !== $tempImageBase . '.png') {
+                @unlink($finalImagePath);
+            }
+
+            report($e);
+            abort(500, 'Impossible de générer l\'image de l\'invitation. Veuillez réessayer.');
+        }
+    }
+
+    public function sendLinkViaWhatsApp(Request $request, string $token, UltraMsgService $whatsAppService): RedirectResponse|JsonResponse
+    {
+        try {
+            $guest = Guest::where('invitation_token', $token)->firstOrFail();
+
+            if (! $guest->phone) {
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Le numéro de téléphone de l\'invité n\'est pas renseigné.',
+                    ], 400);
+                }
+
+                return redirect()->route('invitations.show', $token)
+                    ->with('error', 'Le numéro de téléphone de l\'invité n\'est pas renseigné.');
+            }
+
+            $result = $whatsAppService->sendInvitation($guest);
+
+            if ($result['sent']) {
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'status' => 'ok',
+                        'message' => 'Lien d\'invitation envoyé avec succès via WhatsApp.',
+                    ]);
+                }
+
+                return redirect()->route('invitations.show', $token)
+                    ->with('status', 'Lien d\'invitation envoyé avec succès via WhatsApp à ' . $guest->display_name . '.');
+            } else {
+                $errorMessage = $result['response']['error'] ?? 'Erreur inconnue lors de l\'envoi du lien.';
+
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Échec de l\'envoi: ' . $errorMessage,
+                    ], 500);
+                }
+
+                return redirect()->route('invitations.show', $token)
+                    ->with('error', 'Échec de l\'envoi du lien à ' . $guest->display_name . ': ' . $errorMessage);
+            }
+        } catch (\InvalidArgumentException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $e->getMessage(),
+                ], 400);
+            }
+
+            return redirect()->route('invitations.show', $token)
+                ->with('error', 'Erreur: ' . $e->getMessage());
+        } catch (\RuntimeException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Configuration WhatsApp manquante: ' . $e->getMessage(),
+                ], 500);
+            }
+
+            return redirect()->route('invitations.show', $token)
+                ->with('error', 'Configuration WhatsApp manquante: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Une erreur inattendue est survenue lors de l\'envoi du lien.',
+                ], 500);
+            }
+
+            return redirect()->route('invitations.show', $token)
+                ->with('error', 'Une erreur inattendue est survenue lors de l\'envoi du lien WhatsApp.');
+        }
+    }
+
+    public function sendPdfViaWhatsApp(Request $request, string $token, UltraMsgService $whatsAppService): RedirectResponse|JsonResponse
+    {
+        try {
+            $guest = Guest::with('table')
+                ->where('invitation_token', $token)
+                ->firstOrFail();
+
+            if (! $guest->phone) {
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Le numéro de téléphone de l\'invité n\'est pas renseigné.',
+                    ], 400);
+                }
+
+                return redirect()->route('invitations.show', $token)
+                    ->with('error', 'Le numéro de téléphone de l\'invité n\'est pas renseigné.');
+            }
+
+            // Générer le PDF
+            $data = $this->buildInvitationData($guest, false);
+
+            Pdf::setOptions([
+                'isRemoteEnabled' => true,
+            ]);
+
+            $pdf = Pdf::loadView('invitations.pdf', [
+                'guest' => $guest,
+                'event' => $data['event'],
+                'invitationUrl' => $data['invitationUrl'],
+                'qrCodeDataUri' => $data['qrCodeDataUri'],
+                'backgroundImage' => $data['pdfAssets']['background'] ?? null,
+                'bouquetImage' => $data['pdfAssets']['bouquet'] ?? null,
+            ])->setPaper('a4', 'portrait');
+
+            // Sauvegarder temporairement le PDF
+            $tempDir = storage_path('app/temp');
+            if (!is_dir($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
+
+            $filename = 'invitation_' . $guest->invitation_token . '_' . time() . '.pdf';
+            $tempPath = $tempDir . '/' . $filename;
+
+            $pdf->save($tempPath);
+
+            try {
+                // Envoyer le PDF via WhatsApp
+                $result = $whatsAppService->sendInvitationPdf($guest, $tempPath);
+
+                // Supprimer le fichier temporaire après l'envoi
+                if (file_exists($tempPath)) {
+                    unlink($tempPath);
+                }
+
+                if ($result['sent']) {
+                    if ($request->wantsJson()) {
+                        return response()->json([
+                            'status' => 'ok',
+                            'message' => 'PDF de l\'invitation envoyé avec succès via WhatsApp.',
+                        ]);
+                    }
+
+                    return redirect()->route('invitations.show', $token)
+                        ->with('status', 'PDF de l\'invitation envoyé avec succès via WhatsApp à ' . $guest->display_name . '.');
+                } else {
+                    $errorMessage = $result['response']['error'] ?? 'Erreur inconnue lors de l\'envoi du PDF.';
+
+                    if ($request->wantsJson()) {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => 'Échec de l\'envoi: ' . $errorMessage,
+                        ], 500);
+                    }
+
+                    return redirect()->route('invitations.show', $token)
+                        ->with('error', 'Échec de l\'envoi du PDF à ' . $guest->display_name . ': ' . $errorMessage);
+                }
+            } catch (\Throwable $e) {
+                // Supprimer le fichier temporaire en cas d'erreur
+                if (file_exists($tempPath)) {
+                    @unlink($tempPath);
+                }
+                throw $e;
+            }
+        } catch (\InvalidArgumentException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $e->getMessage(),
+                ], 400);
+            }
+
+            return redirect()->route('invitations.show', $token)
+                ->with('error', 'Erreur: ' . $e->getMessage());
+        } catch (\RuntimeException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Configuration WhatsApp manquante: ' . $e->getMessage(),
+                ], 500);
+            }
+
+            return redirect()->route('invitations.show', $token)
+                ->with('error', 'Configuration WhatsApp manquante: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Une erreur inattendue est survenue lors de l\'envoi du PDF.',
+                ], 500);
+            }
+
+            return redirect()->route('invitations.show', $token)
+                ->with('error', 'Une erreur inattendue est survenue lors de l\'envoi du PDF WhatsApp.');
+        }
+    }
+
+    public function sendImageViaWhatsApp(Request $request, string $token, UltraMsgService $whatsAppService): RedirectResponse|JsonResponse
+    {
+        try {
+            $guest = Guest::with('table')
+                ->where('invitation_token', $token)
+                ->firstOrFail();
+
+            if (! $guest->phone) {
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Le numéro de téléphone de l\'invité n\'est pas renseigné.',
+                    ], 400);
+                }
+
+                return redirect()->route('invitations.show', $token)
+                    ->with('error', 'Le numéro de téléphone de l\'invité n\'est pas renseigné.');
+            }
+
+            // Générer l'image de l'invitation
+            $data = $this->buildInvitationData($guest, false);
+
+            Pdf::setOptions([
+                'isRemoteEnabled' => true,
+            ]);
+
+            $pdf = Pdf::loadView('invitations.pdf', [
+                'guest' => $guest,
+                'event' => $data['event'],
+                'invitationUrl' => $data['invitationUrl'],
+                'qrCodeDataUri' => $data['qrCodeDataUri'],
+                'backgroundImage' => $data['pdfAssets']['background'] ?? null,
+                'bouquetImage' => $data['pdfAssets']['bouquet'] ?? null,
+            ])->setPaper('a4', 'portrait');
+
+            // Générer un nom de fichier unique pour le PDF temporaire
+            $tempDir = storage_path('app/temp');
+            if (!is_dir($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
+
+            $tempPdfPath = $tempDir . '/' . uniqid('invitation_', true) . '.pdf';
+            $tempImageBase = $tempDir . '/' . uniqid('invitation_', true);
+            $tempImagePath = $tempImageBase . '.png';
+
+            try {
+                // Sauvegarder le PDF temporairement
+                $pdfContent = $pdf->output();
+                if (empty($pdfContent)) {
+                    throw new \RuntimeException('Le PDF généré est vide.');
+                }
+
+                $written = file_put_contents($tempPdfPath, $pdfContent);
+                if ($written === false || !file_exists($tempPdfPath)) {
+                    throw new \RuntimeException('Impossible de sauvegarder le PDF temporaire.');
+                }
+
+                if (filesize($tempPdfPath) === 0) {
+                    throw new \RuntimeException('Le fichier PDF généré est vide.');
+                }
+
+                // Convertir uniquement la première page du PDF en image avec ImageMagick convert
+                // [0] signifie la première page du PDF
+                // -density 300 : résolution 300 DPI pour une bonne qualité
+                // -quality 95 : qualité de compression PNG
+                $command = sprintf(
+                    'convert -density 300 -quality 95 %s[0] %s 2>&1',
+                    escapeshellarg($tempPdfPath),
+                    escapeshellarg($tempImagePath)
+                );
+
+                $output = [];
+                $returnCode = 0;
+                exec($command, $output, $returnCode);
+
+                if ($returnCode !== 0) {
+                    $errorMsg = !empty($output) ? implode("\n", $output) : "Code de retour: $returnCode";
+                    throw new \RuntimeException("Échec de la conversion PDF en image (ImageMagick): $errorMsg");
+                }
+
+                if (!file_exists($tempImagePath)) {
+                    $errorMsg = !empty($output) ? implode("\n", $output) : "Fichier généré introuvable";
+                    throw new \RuntimeException("Le fichier image n'a pas été généré: $errorMsg");
+                }
+
+                // Vérifier que l'image générée n'est pas vide
+                if (filesize($tempImagePath) === 0) {
+                    throw new \RuntimeException('Le fichier image généré est vide.');
+                }
+
+                // Envoyer l'image via WhatsApp
+                $result = $whatsAppService->sendInvitationImage($guest, $tempImagePath);
+
+                // Nettoyer les fichiers temporaires
+                if (file_exists($tempPdfPath)) {
+                    unlink($tempPdfPath);
+                }
+                if (file_exists($tempImagePath)) {
+                    unlink($tempImagePath);
+                }
+
+                if ($result['sent']) {
+                    if ($request->wantsJson()) {
+                        return response()->json([
+                            'status' => 'ok',
+                            'message' => 'Image de l\'invitation envoyée avec succès via WhatsApp.',
+                        ]);
+                    }
+
+                    return redirect()->route('invitations.show', $token)
+                        ->with('status', 'Image de l\'invitation envoyée avec succès via WhatsApp à ' . $guest->display_name . '.');
+                } else {
+                    $errorMessage = $result['response']['error'] ?? 'Erreur inconnue lors de l\'envoi de l\'image.';
+
+                    if ($request->wantsJson()) {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => 'Échec de l\'envoi: ' . $errorMessage,
+                        ], 500);
+                    }
+
+                    return redirect()->route('invitations.show', $token)
+                        ->with('error', 'Échec de l\'envoi de l\'image à ' . $guest->display_name . ': ' . $errorMessage);
+                }
+            } catch (\Throwable $e) {
+                // Nettoyer les fichiers temporaires en cas d'erreur
+                if (file_exists($tempPdfPath)) {
+                    @unlink($tempPdfPath);
+                }
+                if (file_exists($tempImagePath)) {
+                    @unlink($tempImagePath);
+                }
+                throw $e;
+            }
+        } catch (\InvalidArgumentException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $e->getMessage(),
+                ], 400);
+            }
+
+            return redirect()->route('invitations.show', $token)
+                ->with('error', 'Erreur: ' . $e->getMessage());
+        } catch (\RuntimeException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Configuration WhatsApp manquante: ' . $e->getMessage(),
+                ], 500);
+            }
+
+            return redirect()->route('invitations.show', $token)
+                ->with('error', 'Configuration WhatsApp manquante: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Une erreur inattendue est survenue lors de l\'envoi de l\'image.',
+                ], 500);
+            }
+
+            return redirect()->route('invitations.show', $token)
+                ->with('error', 'Une erreur inattendue est survenue lors de l\'envoi de l\'image WhatsApp.');
+        }
     }
 
     public function confirm(Request $request, string $token): RedirectResponse|JsonResponse

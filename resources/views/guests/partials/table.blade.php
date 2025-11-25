@@ -135,6 +135,13 @@
                                             <i class="ti ti-link"></i>
                                         </button>
                                     </form>
+                                    <form action="{{ route('guests.send_invitation_image', $guest) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-outline-info btn-sm" title="Envoyer l'image de l'invitation WhatsApp">
+                                            <i class="ti ti-brand-whatsapp me-1"></i>
+                                            <i class="ti ti-photo"></i>
+                                        </button>
+                                    </form>
                                     <form action="{{ route('guests.send_invitation_pdf', $guest) }}" method="POST" class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-outline-success btn-sm" title="Envoyer le PDF de l'invitation WhatsApp">

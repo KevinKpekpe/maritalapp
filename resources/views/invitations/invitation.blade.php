@@ -1016,7 +1016,7 @@
                             <p class="qr-caption">Scannez pour confirmer votre présence et découvrir plus de détails.
                             </p>
                         </div>
-                        <div class="text-center flex flex-col items-center gap-2">
+                        <div class="text-center flex flex-col items-center gap-3">
                             @if (session('download_error'))
                                 <div class="alert alert-danger bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-full">
                                     {{ session('download_error') }}
@@ -1025,21 +1025,38 @@
                             @if ($downloadNotice)
                                 <div class="text-xs text-white/70 max-w-sm">{{ $downloadNotice }}</div>
                             @endif
-                            <a href="{{ route('invitations.download', $guest->invitation_token) }}"
-                                class="download-button relative inline-flex items-center justify-center gap-3 rounded-full bg-linear-to-r from-accent via-orange-400/80 to-amber-300 px-8 py-3 text-sm sm:text-base text-white font-semibold tracking-wide shadow-lg transition-transform hover:-translate-y-1 hover:shadow-glow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-accent/70"
-                                target="_blank" rel="noopener">
-                                <span class="download-button__overlay"></span>
-                                <span class="download-button__content">
-                                    <span class="download-label">Télécharger l'invitation</span>
-                                    <svg class="download-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                        stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
-                                        stroke-linejoin="round">
-                                        <path d="M7 17h10"></path>
-                                        <path d="M12 3v11"></path>
-                                        <path d="M8.5 12.5L12 16l3.5-3.5"></path>
-                                    </svg>
-                                </span>
-                            </a>
+                            <div class="flex flex-col sm:flex-row items-center gap-3">
+                                <a href="{{ route('invitations.download', $guest->invitation_token) }}"
+                                    class="download-button relative inline-flex items-center justify-center gap-3 rounded-full bg-linear-to-r from-accent via-orange-400/80 to-amber-300 px-8 py-3 text-sm sm:text-base text-white font-semibold tracking-wide shadow-lg transition-transform hover:-translate-y-1 hover:shadow-glow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-accent/70"
+                                    target="_blank" rel="noopener">
+                                    <span class="download-button__overlay"></span>
+                                    <span class="download-button__content">
+                                        <span class="download-label">Télécharger PDF</span>
+                                        <svg class="download-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M7 17h10"></path>
+                                            <path d="M12 3v11"></path>
+                                            <path d="M8.5 12.5L12 16l3.5-3.5"></path>
+                                        </svg>
+                                    </span>
+                                </a>
+                                <a href="{{ route('invitations.download-image', $guest->invitation_token) }}"
+                                    class="download-button relative inline-flex items-center justify-center gap-3 rounded-full bg-linear-to-r from-blue-500 via-indigo-500/80 to-purple-400 px-8 py-3 text-sm sm:text-base text-white font-semibold tracking-wide shadow-lg transition-transform hover:-translate-y-1 hover:shadow-glow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500/70"
+                                    target="_blank" rel="noopener">
+                                    <span class="download-button__overlay"></span>
+                                    <span class="download-button__content">
+                                        <span class="download-label">Télécharger Image</span>
+                                        <svg class="download-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                            <path d="M21 15l-5-5L5 21"></path>
+                                        </svg>
+                                    </span>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
