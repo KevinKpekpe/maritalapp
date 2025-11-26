@@ -22,6 +22,9 @@
                             <button type="button" id="send-selected-btn" class="btn btn-success d-none" disabled title="Envoyer à la sélection">
                                 <i class="ti ti-brand-whatsapp"></i> <span id="selected-count">0</span>
                             </button>
+                            <button type="button" id="confirm-selected-btn" class="btn btn-outline-success d-none" disabled title="Confirmer la sélection">
+                                <i class="ti ti-check"></i> <span id="confirm-count">0</span>
+                            </button>
                             <a href="{{ route('guests.export') }}" class="btn btn-outline-success" title="Exporter">
                                 <i class="ti ti-download"></i>
                             </a>
@@ -240,10 +243,20 @@
             const checked = document.querySelectorAll('.guest-checkbox:checked');
             const sendBtn = document.getElementById('send-selected-btn');
             const countSpan = document.getElementById('selected-count');
+            const confirmBtn = document.getElementById('confirm-selected-btn');
+            const confirmCountSpan = document.getElementById('confirm-count');
             const selectAll = document.getElementById('select-all-guests');
 
             const count = checked.length;
+            
+            // Compter les invités en attente de confirmation parmi les sélectionnés
+            const pendingChecked = Array.from(checked).filter(cb => {
+                const rsvpStatus = cb.getAttribute('data-rsvp-status');
+                return !rsvpStatus || rsvpStatus === 'pending';
+            });
+            const pendingCount = pendingChecked.length;
 
+            // Gérer le bouton d'envoi WhatsApp
             if (count > 0) {
                 sendBtn.classList.remove('d-none');
                 sendBtn.disabled = false;
@@ -251,6 +264,16 @@
             } else {
                 sendBtn.classList.add('d-none');
                 sendBtn.disabled = true;
+            }
+
+            // Gérer le bouton de confirmation
+            if (pendingCount > 0) {
+                confirmBtn.classList.remove('d-none');
+                confirmBtn.disabled = false;
+                confirmCountSpan.textContent = pendingCount;
+            } else {
+                confirmBtn.classList.add('d-none');
+                confirmBtn.disabled = true;
             }
 
             if (selectAll) {
@@ -382,6 +405,101 @@
                         const form = document.createElement('form');
                         form.method = 'POST';
                         form.action = '{{ route('guests.send_bulk_invitations') }}';
+
+                        const csrfToken = document.createElement('input');
+                        csrfToken.type = 'hidden';
+                        csrfToken.name = '_token';
+                        csrfToken.value = '{{ csrf_token() }}';
+                        form.appendChild(csrfToken);
+
+                        guestIds.forEach(id => {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'guest_ids[]';
+                            input.value = id;
+                            form.appendChild(input);
+                        });
+
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                });
+            }
+
+            // Bouton de confirmation en masse
+            const confirmBtn = document.getElementById('confirm-selected-btn');
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', function() {
+                    const checked = document.querySelectorAll('.guest-checkbox:checked');
+                    const pendingChecked = Array.from(checked).filter(cb => {
+                        const rsvpStatus = cb.getAttribute('data-rsvp-status');
+                        return !rsvpStatus || rsvpStatus === 'pending';
+                    });
+                    const guestIds = Array.from(pendingChecked).map(cb => cb.value);
+
+                    if (guestIds.length === 0) {
+                        alert('Veuillez sélectionner au moins un invité en attente de confirmation.');
+                        return;
+                    }
+
+                    if (guestIds.length > MAX_SELECTION) {
+                        alert('Vous ne pouvez sélectionner que ' + MAX_SELECTION + ' invités maximum.');
+                        return;
+                    }
+
+                    const guestCount = guestIds.length;
+                    const guestText = guestCount > 1 ? 'invités' : 'invité';
+
+                    if (window.showConfirmModal) {
+                        window.showConfirmModal({
+                            title: 'Confirmer les invitations',
+                            message: `Êtes-vous sûr de vouloir confirmer manuellement ${guestCount} ${guestText} en attente de confirmation ?`,
+                            confirmText: 'Confirmer',
+                            confirmClass: 'btn-success',
+                            icon: 'ti-check',
+                            iconColor: 'text-success',
+                            onSubmit: function() {
+                                // Désactiver le bouton pendant la confirmation
+                                confirmBtn.disabled = true;
+                                confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Confirmation en cours...';
+
+                                // Créer un formulaire et le soumettre
+                                const form = document.createElement('form');
+                                form.method = 'POST';
+                                form.action = '{{ route('guests.confirm_bulk') }}';
+
+                                const csrfToken = document.createElement('input');
+                                csrfToken.type = 'hidden';
+                                csrfToken.name = '_token';
+                                csrfToken.value = '{{ csrf_token() }}';
+                                form.appendChild(csrfToken);
+
+                                guestIds.forEach(id => {
+                                    const input = document.createElement('input');
+                                    input.type = 'hidden';
+                                    input.name = 'guest_ids[]';
+                                    input.value = id;
+                                    form.appendChild(input);
+                                });
+
+                                document.body.appendChild(form);
+                                form.submit();
+                            }
+                        });
+                    } else {
+                        // Fallback si le modal n'est pas disponible
+                        if (!confirm('Confirmer ' + guestIds.length + ' invitation(s) en attente ?')) {
+                            return;
+                        }
+
+                        // Désactiver le bouton pendant la confirmation
+                        confirmBtn.disabled = true;
+                        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Confirmation en cours...';
+
+                        // Créer un formulaire et le soumettre
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '{{ route('guests.confirm_bulk') }}';
 
                         const csrfToken = document.createElement('input');
                         csrfToken.type = 'hidden';

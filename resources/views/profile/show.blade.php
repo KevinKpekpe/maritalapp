@@ -33,15 +33,15 @@
                             </ul>
                             <div class="row g-3 my-4">
                                 <div class="col-4">
-                                    <h5 class="mb-0">{{ \App\Models\Guest::count() }}</h5>
-                                    <small class="text-muted">Invités</small>
+                                    <h5 class="mb-0">{{ \App\Models\Guest::selectRaw('SUM(CASE WHEN type = "couple" THEN 2 ELSE 1 END) as total')->whereNull('deleted_at')->value('total') ?? 0 }}</h5>
+                                    <small class="text-muted">Personnes</small>
                                 </div>
                                 <div class="col-4 border border-top-0 border-bottom-0">
                                     <h5 class="mb-0">{{ \App\Models\ReceptionTable::count() }}</h5>
                                     <small class="text-muted">Tables</small>
                                 </div>
                                 <div class="col-4">
-                                    <h5 class="mb-0">{{ \App\Models\Guest::where('rsvp_status', 'confirmed')->count() }}</h5>
+                                    <h5 class="mb-0">{{ \App\Models\Guest::selectRaw('SUM(CASE WHEN type = "couple" THEN 2 ELSE 1 END) as total')->where('rsvp_status', 'confirmed')->whereNull('deleted_at')->value('total') ?? 0 }}</h5>
                                     <small class="text-muted">Confirmés</small>
                                 </div>
                             </div>

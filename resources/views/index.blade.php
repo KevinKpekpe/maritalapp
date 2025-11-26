@@ -31,16 +31,16 @@
     <div class="col-md-6 col-xl-3">
         <div class="card">
             <div class="card-body">
-                <h6 class="mb-2 f-w-400 text-muted">Total des invités</h6>
+                <h6 class="mb-2 f-w-400 text-muted">Total des personnes</h6>
                 <h4 class="mb-0">{{ number_format($stats['guests_total']) }}</h4>
-                <p class="mb-0 text-muted text-sm">Invités actifs enregistrés</p>
+                <p class="mb-0 text-muted text-sm">Personnes invitées (couples = 2)</p>
             </div>
         </div>
     </div>
     <div class="col-md-6 col-xl-3">
         <div class="card">
             <div class="card-body">
-                <h6 class="mb-2 f-w-400 text-muted">Invités en attente</h6>
+                <h6 class="mb-2 f-w-400 text-muted">Personnes en attente</h6>
                 <h4 class="mb-0 text-warning">{{ number_format($stats['guests_pending']) }}</h4>
                 <p class="mb-0 text-muted text-sm">RSVP non confirmé</p>
             </div>
@@ -51,7 +51,7 @@
             <div class="card-body">
                 <h6 class="mb-2 f-w-400 text-muted">Confirmations reçues</h6>
                 <h4 class="mb-0 text-success">{{ number_format($stats['guests_confirmed']) }}</h4>
-                <p class="mb-0 text-muted text-sm">Invités ayant confirmé leur présence</p>
+                <p class="mb-0 text-muted text-sm">Personnes ayant confirmé</p>
             </div>
         </div>
     </div>

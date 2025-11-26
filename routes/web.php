@@ -33,16 +33,31 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('
 
 Route::middleware('auth.session')->group(function () {
     Route::get('/', function () {
-        $totalGuests = Guest::count();
-        $confirmedGuests = Guest::where('rsvp_status', 'confirmed')->count();
-        $pendingGuests = Guest::where(static function ($query) {
-            $query->whereNull('rsvp_status')
-                ->orWhere('rsvp_status', 'pending');
-        })->count();
+        // Calculer le nombre total de personnes (couple = 2, solo = 1)
+        $totalGuests = Guest::selectRaw('SUM(CASE WHEN type = "couple" THEN 2 ELSE 1 END) as total')
+            ->whereNull('deleted_at')
+            ->value('total') ?? 0;
+        
+        // Calculer le nombre de personnes confirmées (couple = 2, solo = 1)
+        $confirmedGuests = Guest::selectRaw('SUM(CASE WHEN type = "couple" THEN 2 ELSE 1 END) as total')
+            ->where('rsvp_status', 'confirmed')
+            ->whereNull('deleted_at')
+            ->value('total') ?? 0;
+        
+        // Calculer le nombre de personnes en attente (couple = 2, solo = 1)
+        $pendingGuests = Guest::selectRaw('SUM(CASE WHEN type = "couple" THEN 2 ELSE 1 END) as total')
+            ->where(function ($query) {
+                $query->whereNull('rsvp_status')
+                    ->orWhere('rsvp_status', 'pending');
+            })
+            ->whereNull('deleted_at')
+            ->value('total') ?? 0;
+        
         $tableCount = ReceptionTable::count();
-        $invitationsSent = Guest::whereNotNull('whatsapp_sent_at')->count();
+        $invitationsSent = Guest::whereNotNull('whatsapp_sent_at')->whereNull('deleted_at')->count();
 
         // Données pour le graphique hebdomadaire (7 derniers jours)
+        // Compter le nombre de personnes confirmées (couple = 2, solo = 1)
         $weeklyData = [];
         $weeklyLabels = [];
         $startOfWeek = now()->subDays(6)->startOfDay();
@@ -52,15 +67,18 @@ Route::middleware('auth.session')->group(function () {
             $dayStart = $date->copy()->startOfDay();
             $dayEnd = $date->copy()->endOfDay();
 
-            $count = Guest::where('rsvp_status', 'confirmed')
+            $count = Guest::selectRaw('SUM(CASE WHEN type = "couple" THEN 2 ELSE 1 END) as total')
+                ->where('rsvp_status', 'confirmed')
                 ->whereBetween('rsvp_confirmed_at', [$dayStart, $dayEnd])
-                ->count();
+                ->whereNull('deleted_at')
+                ->value('total') ?? 0;
 
-            $weeklyData[] = $count;
+            $weeklyData[] = (int) $count;
             $weeklyLabels[] = $date->format('D');
         }
 
         // Données pour le graphique mensuel (12 derniers mois)
+        // Compter le nombre de personnes confirmées (couple = 2, solo = 1)
         $monthlyData = [];
         $monthlyLabels = [];
 
@@ -69,11 +87,13 @@ Route::middleware('auth.session')->group(function () {
             $monthStart = $date->copy()->startOfMonth();
             $monthEnd = $date->copy()->endOfMonth();
 
-            $count = Guest::where('rsvp_status', 'confirmed')
+            $count = Guest::selectRaw('SUM(CASE WHEN type = "couple" THEN 2 ELSE 1 END) as total')
+                ->where('rsvp_status', 'confirmed')
                 ->whereBetween('rsvp_confirmed_at', [$monthStart, $monthEnd])
-                ->count();
+                ->whereNull('deleted_at')
+                ->value('total') ?? 0;
 
-            $monthlyData[] = $count;
+            $monthlyData[] = (int) $count;
             $monthlyLabels[] = $date->format('M');
         }
 
@@ -108,6 +128,7 @@ Route::middleware('auth.session')->group(function () {
     Route::post('guests/{guest}/send-invitation-image', [GuestController::class, 'sendInvitationImage'])->name('guests.send_invitation_image');
     Route::post('guests/{guest}/send-invitation-pdf', [GuestController::class, 'sendInvitationPdf'])->name('guests.send_invitation_pdf');
     Route::post('guests/send-bulk-invitations', [GuestController::class, 'sendBulkInvitations'])->name('guests.send_bulk_invitations');
+    Route::post('guests/confirm-bulk', [GuestController::class, 'confirmBulk'])->name('guests.confirm_bulk');
     Route::get('guests/export', [GuestController::class, 'export'])->name('guests.export');
     Route::get('guests/import', [GuestController::class, 'showImport'])->name('guests.import.show');
     Route::get('guests/import/template', [GuestController::class, 'downloadTemplate'])->name('guests.import.template');

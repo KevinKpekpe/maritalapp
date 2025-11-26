@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Guest;
+use App\Models\Notification;
 use App\Models\ReceptionTable;
+use App\Models\User;
+use App\Mail\GuestConfirmationNotification;
 use App\Services\WhatsApp\UltraMsgService;
 use App\Http\Controllers\InvitationController;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -11,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -534,6 +538,98 @@ class GuestController extends Controller
             ->route('guests.index')
             ->with('status', $message)
             ->with('bulk_errors', $errors);
+    }
+
+    /**
+     * Confirme manuellement plusieurs invités sélectionnés.
+     */
+    public function confirmBulk(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'guest_ids' => ['required', 'array', 'min:1', 'max:100'],
+            'guest_ids.*' => ['required', 'integer', 'exists:guests,id'],
+        ]);
+
+        $guestIds = $request->input('guest_ids');
+        $guests = Guest::whereIn('id', $guestIds)
+            ->whereNull('deleted_at')
+            ->where(function ($query) {
+                $query->whereNull('rsvp_status')
+                    ->orWhere('rsvp_status', 'pending');
+            })
+            ->get();
+
+        if ($guests->isEmpty()) {
+            return redirect()
+                ->route('guests.index')
+                ->with('error', 'Aucun invité en attente de confirmation sélectionné.');
+        }
+
+        $confirmedCount = 0;
+        $alreadyConfirmedCount = 0;
+
+        foreach ($guests as $guest) {
+            if ($guest->rsvp_status !== 'confirmed') {
+                $guest->forceFill([
+                    'rsvp_status' => 'confirmed',
+                    'rsvp_confirmed_at' => now(),
+                ])->save();
+
+                // Créer des notifications pour tous les utilisateurs
+                $this->createNotificationsForUsers($guest);
+
+                // Envoyer des emails de notification
+                $this->sendEmailNotifications($guest);
+
+                $confirmedCount++;
+            } else {
+                $alreadyConfirmedCount++;
+            }
+        }
+
+        $message = "{$confirmedCount} invitation(s) confirmée(s) avec succès.";
+        if ($alreadyConfirmedCount > 0) {
+            $message .= " {$alreadyConfirmedCount} invité(s) déjà confirmé(s) ignoré(s).";
+        }
+
+        return redirect()
+            ->route('guests.index')
+            ->with('status', $message);
+    }
+
+    /**
+     * Créer des notifications pour tous les utilisateurs lors de la confirmation
+     */
+    protected function createNotificationsForUsers(Guest $guest): void
+    {
+        $users = User::all();
+        $message = "{$guest->display_name} a confirmé sa présence.";
+
+        foreach ($users as $user) {
+            Notification::create([
+                'user_id' => $user->id,
+                'guest_id' => $guest->id,
+                'type' => 'rsvp_confirmed',
+                'message' => $message,
+            ]);
+        }
+    }
+
+    /**
+     * Envoyer des emails de notification à tous les utilisateurs
+     */
+    protected function sendEmailNotifications(Guest $guest): void
+    {
+        $users = User::all();
+
+        foreach ($users as $user) {
+            try {
+                Mail::to($user->email)->send(new GuestConfirmationNotification($guest));
+            } catch (\Exception $e) {
+                // Log l'erreur mais ne bloque pas le processus
+                report($e);
+            }
+        }
     }
 
     protected function validateData(Request $request, ?int $guestId = null): array

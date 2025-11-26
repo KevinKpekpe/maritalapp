@@ -10,6 +10,7 @@
                     <th style="width: 40px;">
                         <input type="checkbox" id="select-all-guests" title="Sélectionner tout">
                     </th>
+                    <th style="width: 50px;" class="text-center">N°</th>
                     <th>Invité(s)</th>
                     <th class="d-none d-md-table-cell">Type</th>
                     <th class="d-none d-lg-table-cell">Table</th>
@@ -24,15 +25,15 @@
             </thead>
             <tbody>
                 @foreach ($guests as $guest)
+                    @php
+                        $isPending = is_null($guest->rsvp_status) || $guest->rsvp_status === 'pending';
+                    @endphp
                     <tr>
                         <td>
-                            @if (!$guest->whatsapp_sent_at)
-                                <input type="checkbox" class="guest-checkbox" name="selected_guests[]" value="{{ $guest->id }}" data-guest-id="{{ $guest->id }}">
-                            @else
-                                <span class="text-muted" title="Invitation déjà envoyée">
-                                    <i class="ti ti-check text-success"></i>
-                                </span>
-                            @endif
+                            <input type="checkbox" class="guest-checkbox" name="selected_guests[]" value="{{ $guest->id }}" data-guest-id="{{ $guest->id }}" data-rsvp-status="{{ $guest->rsvp_status ?? 'pending' }}" @if(!$isPending) data-confirmed="true" @endif>
+                        </td>
+                        <td class="text-center text-muted fw-semibold">
+                            {{ $loop->iteration }}
                         </td>
                         <td>
                             <div class="d-flex flex-column">
