@@ -681,19 +681,35 @@ class GuestController extends Controller
     }
 
     /**
-     * Exporte la liste des invités en fichier PDF avec noms numérotés.
+     * Exporte la liste des invités en fichier PDF avec noms numérotés, groupés par table.
      */
     public function export()
     {
         $filename = 'invites_'.now()->format('Y-m-d_His').'.pdf';
 
-        // Récupérer tous les invités avec leur table, triés par prénom
+        // Récupérer tous les invités avec leur table, triés par table puis par prénom
         $guests = Guest::with(['table' => fn ($query) => $query->withTrashed()])
+            ->whereNull('deleted_at')
+            ->orderBy('reception_table_id')
             ->orderBy('primary_first_name')
             ->get();
 
+        // Grouper les invités par table
+        $guestsByTable = $guests->groupBy(function ($guest) {
+            return $guest->table ? $guest->table->id : 'no_table';
+        })->map(function ($tableGuests, $tableId) {
+            $table = $tableGuests->first()->table;
+            return [
+                'table' => $table ? $table->name : 'Non assigné',
+                'guests' => $tableGuests->values()->all(),
+            ];
+        })->sortBy(function ($group) {
+            // Trier par nom de table, avec "Non assigné" à la fin
+            return $group['table'] === 'Non assigné' ? 'zzz' : $group['table'];
+        })->values();
+
         $pdf = Pdf::loadView('guests.export-pdf', [
-            'guests' => $guests,
+            'guestsByTable' => $guestsByTable,
             'title' => 'Liste des invités',
         ]);
 
