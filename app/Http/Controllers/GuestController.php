@@ -1020,4 +1020,82 @@ class GuestController extends Controller
             return $currentCapacity < $maxCapacityPerTable;
         });
     }
+
+    /**
+     * Affiche la page de présence avec les invités regroupés par table.
+     */
+    public function presence(): View
+    {
+        $guests = Guest::with(['table' => fn ($query) => $query->withTrashed()])
+            ->whereNull('deleted_at')
+            ->orderBy('reception_table_id')
+            ->orderBy('primary_first_name')
+            ->get();
+
+        // Grouper les invités par table
+        $guestsByTable = $guests->groupBy(function ($guest) {
+            return $guest->table ? $guest->table->id : 'no_table';
+        })->map(function ($tableGuests, $tableId) {
+            $table = $tableGuests->first()->table;
+            return [
+                'table' => $table ? $table->name : 'Non assigné',
+                'table_id' => $table ? $table->id : 'no_table',
+                'guests' => $tableGuests->values()->all(),
+            ];
+        })->sortBy(function ($group) {
+            // Trier par nom de table, avec "Non assigné" à la fin
+            return $group['table'] === 'Non assigné' ? 'zzz' : $group['table'];
+        })->values();
+
+        $tables = ReceptionTable::withTrashed()
+            ->orderBy('name')
+            ->get();
+
+        $breadcrumbs = [
+            ['label' => 'Accueil', 'url' => url('/')],
+            ['label' => 'Présence', 'url' => route('guests.presence')],
+        ];
+
+        return view('guests.presence', compact('guestsByTable', 'tables', 'breadcrumbs'))->with('pageTitle', 'Présence');
+    }
+
+    /**
+     * Marque un invité comme présent (AJAX).
+     */
+    public function markArrived(Request $request, Guest $guest): JsonResponse
+    {
+        // Vérifier que l'invité n'est pas supprimé
+        if ($guest->trashed()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cet invité a été supprimé.',
+            ], 404);
+        }
+
+        // Vérifier que l'invité n'a pas déjà été marqué comme présent
+        if ($guest->arrived_at) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cet invité a déjà été marqué comme présent.',
+            ], 400);
+        }
+
+        try {
+            $guest->forceFill([
+                'arrived_at' => now(),
+            ])->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$guest->display_name} a été marqué comme présent.",
+                'arrived_at' => $guest->arrived_at->format('H:i'),
+            ]);
+        } catch (\Exception $e) {
+            report($e);
+            return response()->json([
+                'success' => false,
+                'message' => 'Une erreur est survenue lors du marquage de la présence.',
+            ], 500);
+        }
+    }
 }

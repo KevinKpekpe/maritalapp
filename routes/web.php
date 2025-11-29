@@ -129,6 +129,8 @@ Route::middleware('auth.session')->group(function () {
     Route::post('guests/{guest}/send-invitation-pdf', [GuestController::class, 'sendInvitationPdf'])->name('guests.send_invitation_pdf');
     Route::post('guests/send-bulk-invitations', [GuestController::class, 'sendBulkInvitations'])->name('guests.send_bulk_invitations');
     Route::post('guests/confirm-bulk', [GuestController::class, 'confirmBulk'])->name('guests.confirm_bulk');
+    Route::get('guests/presence', [GuestController::class, 'presence'])->name('guests.presence');
+    Route::post('guests/{guest}/mark-arrived', [GuestController::class, 'markArrived'])->name('guests.mark_arrived');
     Route::get('guests/export', [GuestController::class, 'export'])->name('guests.export');
     Route::get('guests/import', [GuestController::class, 'showImport'])->name('guests.import.show');
     Route::get('guests/import/template', [GuestController::class, 'downloadTemplate'])->name('guests.import.template');

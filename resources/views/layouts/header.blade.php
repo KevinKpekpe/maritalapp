@@ -11,6 +11,7 @@
     <meta name="description" content="Application de gestion de mariage">
     <meta name="keywords" content="Mariage, Gestion, Invités">
     <meta name="author" content="Votre Organisation">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- [Favicon] -->
     <link rel="icon" type="image/svg+xml" href="{{ asset('assets/images/favicon.svg') }}">
@@ -61,6 +62,13 @@
                         <a href="{{ route('guests.index') }}" class="pc-link">
                             <span class="pc-micon"><i class="ti ti-users"></i></span>
                             <span class="pc-mtext">Invités</span>
+                        </a>
+                    </li>
+                    <!-- Présence -->
+                    <li class="pc-item">
+                        <a href="{{ route('guests.presence') }}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-user-check"></i></span>
+                            <span class="pc-mtext">Présence</span>
                         </a>
                     </li>
                     <!-- Plan de tables -->
